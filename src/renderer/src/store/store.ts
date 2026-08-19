@@ -72,7 +72,8 @@ export interface Agent {
   lastPrompt?: string;
   /** the orchestrator coordinator agent — runs the floor */
   isOrchestrator?: boolean;
-  /** legacy alias for isOrchestrator */
+  /** legacy alias for isOrchestrator
+   * @deprecated Use isOrchestrator */
   isGod?: boolean;
   /** Sovereign Nostr cryptographic public key (bech32 npub1...) */
   npub?: string;
@@ -118,7 +119,7 @@ export interface QueuedMessage {
   slack?: { channel: string; thread_ts: string };
   /** Optional override for the text actually typed into the agent's PTY. When set,
    *  the drain submits THIS instead of `text`, while UI/card surfaces keep using
-   *  `text`. Used by Slack-origin work to carry the autonomy preamble to god's
+   *  `text`. Used by Slack-origin work to carry the autonomy preamble to the orchestrator's
    *  prompt without polluting the human-readable kanban card title (= raw `text`). */
   instruction?: string;
   /** User clicked "send now" while floor-wide auto-delivery was paused. Bypasses
@@ -132,11 +133,11 @@ export interface QueuedMessage {
 // v0.3.4: at-a-glance branch/status/log without opening the IDE.
 export type SidebarTab = 'terminal' | 'messages' | 'traces' | 'git';
 
-/** Lifecycle of the god agent ("Michael") bootstrap on launch.
+/** Lifecycle of the orchestrator agent ("Michael") bootstrap on launch.
  *  'booting' until his PTY is confirmed live, then 'ready' (or 'failed' if the
  *  spawn errored). The empty-floor UI shows a loader while 'booting' so users
  *  don't see the "add agent" prompt before Michael has clocked in. */
-export type GodStatus = 'booting' | 'ready' | 'failed';
+export type OrchestratorStatus = 'booting' | 'ready' | 'failed';
 
 interface State {
   agents: Agent[];
@@ -147,7 +148,7 @@ interface State {
   /** Workers from the previous session whose terminal died with the app (quit /
    *  crash). Kept with their full spawn recipe (id, cwd, model, command) so the
    *  user can one-click respawn them with the SAME agent id — memory, inbox and
-   *  registry entry reattach by themselves. God/assistant are excluded (they
+   *  registry entry reattach by themselves. Orchestrator/assistant are excluded (they
    *  auto-respawn). */
   restorableAgents: Agent[];
   selectedId: string | null;
@@ -178,7 +179,7 @@ interface State {
   ideAgentId: string | null;
   sidebarWidth: number;
   sidebarTab: SidebarTab;
-  godStatus: GodStatus;
+  orchestratorStatus: OrchestratorStatus;
   /** Per-agent outgoing message queue (agent id → messages awaiting delivery).
    *  Lets the user keep "talking" to a busy agent: messages park here and are
    *  drained to the terminal one-by-one once the agent is free. */
@@ -187,7 +188,7 @@ interface State {
    *  shown in the command center (interactive sessions don't expose billed $). */
   toolCounts: Record<string, number>;
   bumpToolCount: (id: string) => void;
-  setGodStatus: (status: GodStatus) => void;
+  setOrchestratorStatus: (status: OrchestratorStatus) => void;
   select: (id: string) => void;
   updateAgent: (id: string, patch: Partial<Agent>) => void;
   setAgentNote: (id: string, note: string) => void;
@@ -599,12 +600,12 @@ export const useStore = create<State>((set) => ({
   ideAgentId: null,
   sidebarWidth: initialSidebarWidth,
   sidebarTab: initialSidebarTab,
-  godStatus: 'booting',
+  orchestratorStatus: 'booting',
   messageQueues: initialQueues,
   toolCounts: {},
   bumpToolCount: (id) =>
     set((s) => ({ toolCounts: { ...s.toolCounts, [id]: (s.toolCounts[id] ?? 0) + 1 } })),
-  setGodStatus: (status) => set({ godStatus: status }),
+  setOrchestratorStatus: (status) => set({ orchestratorStatus: status }),
   select: (id) => set((s) => { persistAgents(s.agents, id); return { selectedId: id, ccTabRequest: null }; }),
   updateAgent: (id, patch) =>
     set((s) => {
@@ -633,9 +634,9 @@ export const useStore = create<State>((set) => ({
       // addAgent for the same id — never render a duplicate card. The first writer
       // (richer local record) wins; the broadcast is a no-op for it.
       if (s.agents.some((a) => a.id === agent.id)) return s;
-      // GOD enters at the HEAD, everyone else at the tail. Michael's position was
+      // Orchestrator enters at the HEAD, everyone else at the tail. Michael's position was
       // otherwise decided by a race he usually lost: useHive's bootstrap removes
-      // the restored god entry, then spawns him asynchronously (a setTimeout, a
+      // the restored orchestrator entry, then spawns him asynchronously (a setTimeout, a
       // listPtys round-trip, and a --resume that seeds a transcript first), while
       // useRestoreTeam respawns last session's workers in parallel. Whoever
       // resolved first landed first, so a session with workers to restore put the
@@ -644,7 +645,7 @@ export const useStore = create<State>((set) => ({
       //
       // Fixed at insertion rather than by sorting in AgentStrip: the strip has
       // drag-reorder (reorderAgents) whose whole point is a persisted manual
-      // order, and a god-first sort at render time would silently override the
+      // order, and a orchestrator-first sort at render time would silently override the
       // user's own arrangement every frame. This just makes the head the honest
       // default; a deliberate drag still wins and still persists.
       const agents = agent.isGod ? [agent, ...s.agents] : [...s.agents, agent];
@@ -763,7 +764,7 @@ export const useStore = create<State>((set) => ({
       // operator's real backlog behind them.
       //
       // The invariant lives HERE rather than at the call sites because there are
-      // several — the context trigger, god dispatching a work order, Slack, the
+      // several — the context trigger, orchestrator dispatching a work order, Slack, the
       // composer — and each one that grew its own check could still be bypassed
       // by the next path someone adds. The context trigger's own check stays as
       // cheap defence in depth, but this is the one that cannot be routed around.
@@ -816,7 +817,7 @@ export const useStore = create<State>((set) => ({
       const agents = s.agents.filter((a) => !a.ptyId || live.has(a.ptyId));
       if (agents.length === s.agents.length) return s;
       // Workers whose terminal died with the previous session become restorable
-      // (full spawn recipe retained) instead of silently vanishing. God and the
+      // (full spawn recipe retained) instead of silently vanishing. Orchestrator and the
       // prep assistant are excluded — they auto-respawn at boot.
       const dead = s.agents.filter(
         (a) => a.ptyId && !live.has(a.ptyId) && !a.isGod && !a.isAssistant

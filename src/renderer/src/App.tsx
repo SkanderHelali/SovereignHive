@@ -39,7 +39,7 @@ export function App() {
   const agentCount = agents.length;
   const addAgentOpen = useStore(s => s.addAgentOpen);
   const setAddAgentOpen = useStore(s => s.setAddAgentOpen);
-  const godStatus = useStore(s => s.godStatus);
+  const orchestratorStatus = useStore(s => s.orchestratorStatus);
   const fullscreenAgentId = useStore(s => s.fullscreenAgentId);
   const appThemeNow = useAppTheme();
   const fullscreenFilePath = useStore(s => s.fullscreenFilePath);
@@ -129,7 +129,7 @@ export function App() {
   // Quit warning subscription
   useEffect(() => window.cth.onCloseRequested((info) => setQuitWarn(info)), []);
 
-  // Shareable hires: a validated manifest arriving via the munderdifflin://
+  // Shareable hires: a validated manifest arriving via the sovereignhive://
   // deep link (or file import) pre-fills the Add-Agent modal. Never spawns by itself.
   const setPendingHire = useStore(s => s.setPendingHire);
   useEffect(() => {
@@ -169,7 +169,7 @@ export function App() {
     setClosing(null);
   };
 
-  // The hive: god-agent bootstrap, hook-driven avatars, idle-agent waking. Held
+  // The hive: orchestrator-agent bootstrap, hook-driven avatars, idle-agent waking. Held
   // off until the user opens a hive in the launch picker (passing null no-ops the
   // hook) so Michael doesn't boot against the current home while the user may be
   // about to switch to a different one.
@@ -306,7 +306,7 @@ export function App() {
           {appThemeNow === 'dark' ? '☀' : '☾'}
         </button>
         {/* v0.3.4: the IDE button moved to agent level — every agent's header
-            (sidebar detail, god Command Center, fullscreen) carries it. */}
+            (sidebar detail, orchestrator Command Center, fullscreen) carries it. */}
         <button
           className="cth-titlebar-nodrag cth-settings-btn"
           onClick={() => { setSettingsSection(undefined); setSettingsOpen(true); }}
@@ -362,8 +362,8 @@ export function App() {
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
           <OfficeFloor />
           <MemoryPanel />
-          {agentCount === 0 && godStatus === 'booting' && <MichaelBooting />}
-          {agentCount === 0 && godStatus !== 'booting' && (
+          {agentCount === 0 && orchestratorStatus === 'booting' && <MichaelBooting />}
+          {agentCount === 0 && orchestratorStatus !== 'booting' && (
             <div style={{
               position: 'absolute', inset: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -399,7 +399,7 @@ export function App() {
         }}>
           {agent ? (
             <AgentDetailPanel agent={agent} />
-          ) : godStatus === 'booting' ? (
+          ) : orchestratorStatus === 'booting' ? (
             <PixelPanel variant="default" noPadding style={{
               padding: 16, height: '100%',
               display: 'flex', flexDirection: 'column',

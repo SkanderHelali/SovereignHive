@@ -20,25 +20,25 @@ import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/comp
 import { deliverWithAcknowledgement } from './queueDelivery';
 import { OFFICE_CAST, DEFAULT_CHARACTER } from '@/scene/office/cast';
 
-const GOD_ID = 'god';
+const ORCHESTRATOR_ID = 'orchestrator';
 /** Accent palette for MAIN-spawned (voice-hired) agents — picked deterministically
  *  from the agent id so the same agent always gets the same colour. Mirrors the
  *  AddAgentModal palette. */
 const SPAWN_ACCENTS = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'peach'] as const;
-const GOD_PTY = `pty-${GOD_ID}`;
+const GOD_PTY = `pty-${ORCHESTRATOR_ID}`;
 
 const REMOTE_CONTROL_SETTLE_MS = 1500;
 // Provider-agnostic PTY-quiescence idle fallback (#2e). A non-Claude bridge that
 // fires a 'working' event but never its turn-end signal (Stop / session.idle /
 // agent_end) would pin the agent 'working' forever → the idle-only inbox-wake nudge
-// never fires → a god stops draining mail and the floor stalls. So a 'working'
+// never fires → a orchestrator stops draining mail and the floor stalls. So a 'working'
 // agent whose PTY has emitted NOTHING for this window is treated as turn-done and
 // flipped idle. A streaming turn (incl. a long tool) keeps emitting bytes → stays
 // working; only true silence drifts it idle. Hook events still win — a fresh
 // PreToolUse/Stop refreshes status on the next event. Checked on QUIESCE_POLL_MS.
 const QUIESCE_IDLE_MS = 12000;
 const QUIESCE_POLL_MS = 4000;
-// After a god/agent spawn, hold off the inbox-wake + queue-drain typers for this
+// After a orchestrator/agent spawn, hold off the inbox-wake + queue-drain typers for this
 // long while the readiness handshake + provider-specific boot sequence runs.
 const BOOT_GRACE_MS = 35_000;
 // Delay before typing a one-time TUI protocol seed into a fresh worker (3b) —
@@ -46,7 +46,7 @@ const BOOT_GRACE_MS = 35_000;
 // submitToPty additionally waits for the terminal's readiness handshake.
 const SEED_BOOT_MS = 12_000;
 
-// The first thing Michael (god) is told on a fresh spawn — orient him and put
+// The first thing Michael (orchestrator) is told on a fresh spawn — orient him and put
 // him to work running the floor. Kept terse and action-oriented.
 const INITIAL_GOD_PROMPT = [
   "You're online as Michael, the orchestrator of the hive. Get oriented, then start running the floor:",
@@ -139,7 +139,7 @@ function enrichTaskPrompt(text: string): string {
     `ENRICH TASK: ${text}`,
     '',
     '(Identify the relevant project, cd in, gather READ-ONLY context, then send the improved,',
-    'self-contained prompt to Michael via an outbox message with "to":"god". Do not do the task yourself.)'
+    'self-contained prompt to Michael via an outbox message with "to":"orchestrator". Do not do the task yourself.)'
   ].join('\n');
 }
 
@@ -247,7 +247,7 @@ function passesContextPressure(a: Agent, rule: ContextRule): boolean {
 
 /**
  * The renderer-side glue for the hive:
- *   1. spawns the god agent into Michael's room when none is running,
+ *   1. spawns the orchestrator agent into Michael's room when none is running,
  *   2. drives avatar state from real Claude Code hook events, and
  *   3. wakes idle agents that have unread inbox messages so collaboration
  *      doesn't stall while an agent sits at its prompt.
@@ -259,7 +259,7 @@ export function useHive(config: HarnessConfig | null): void {
   // This used to hold one string — the lexicographically largest id in the inbox,
   // read as "the newest". Message ids are usually `<timestamp>-<rand>`, so that
   // held, but an agent may set its own `id` in the outbox JSON and the hive keeps
-  // it verbatim (hive.ts normalize: `partial.id ?? ...`). One such id in god's
+  // it verbatim (hive.ts normalize: `partial.id ?? ...`). One such id in orchestrator's
   // inbox — `dev15-progress-canvas-v4` — sorts above EVERY `2026-*` timestamp and
   // never drains, so the "newest" id was frozen on it: Michael was nudged once per
   // app launch and then never again, however much real mail piled up behind it.
@@ -307,38 +307,38 @@ export function useHive(config: HarnessConfig | null): void {
   // so a re-entrant event can't race a second respawn for the same id.
   const reviving = useRef<Record<string, number>>({});
   // Reactive so the assistant bootstrap (effect #1b) re-runs once Michael is ready.
-  const godStatus = useStore((s) => s.godStatus);
+  const orchestratorStatus = useStore((s) => s.orchestratorStatus);
   // #5C/#7C.4 — latest circuit-breaker level per agent. When 'constrained'/
   // 'stopped' the avatar is pinned to 'looping' and hook events must NOT flip it
   // back to 'working' (the flicker the spec calls out); only a genuine Stop clears it.
   const breakerLevel = useRef<Record<string, string>>({});
 
-  // 1) Bootstrap the god agent (source of truth = live PTYs, to dodge restarts).
+  // 1) Bootstrap the orchestrator agent (source of truth = live PTYs, to dodge restarts).
   useEffect(() => {
     if (!config?.onboardingComplete || !config.harnessHome) return;
     let cancelled = false;
-    useStore.getState().setGodStatus('booting');
+    useStore.getState().setOrchestratorStatus('booting');
     const t = setTimeout(async () => {
       if (cancelled) return;
       const live = await window.cth.listPtys().catch(() => []);
       if (live.some((p) => p.id === GOD_PTY)) { // already running — keep restored entry
-        if (!cancelled) useStore.getState().setGodStatus('ready');
+        if (!cancelled) useStore.getState().setOrchestratorStatus('ready');
         return;
       }
       // Synchronous guard (no await between check and set) → exactly one spawn.
       if (cancelled || godSpawning.current) return;
       godSpawning.current = true;
-      useStore.getState().removeAgent(GOD_ID); // clear any stale restored entry
+      useStore.getState().removeAgent(ORCHESTRATOR_ID); // clear any stale restored entry
 
-      const godProvider = config.godProvider ?? 'claude';
-      const godModel = config.godModel;
-      const command = buildSpawnCommand(config, godModel, godProvider);
+      const orchestratorProvider = config.orchestratorProvider ?? 'claude';
+      const orchestratorModel = config.orchestratorModel;
+      const command = buildSpawnCommand(config, orchestratorModel, orchestratorProvider);
       const [exe, ...args] = tokenizeCommand(command.trim());
       const res = await window.cth.spawnPty({
         id: GOD_PTY,
         cwd: config.harnessHome!,
         command: exe,
-        provider: godProvider,
+        provider: orchestratorProvider,
         args,
         cols: 100,
         rows: 30,
@@ -348,16 +348,16 @@ export function useHive(config: HarnessConfig | null): void {
         // fresh session. Without this the most important context on the floor —
         // the orchestrator's — was lost on every restart.
         resume: true,
-        hive: { id: GOD_ID, name: 'Michael', provider: godProvider, cwd: config.harnessHome!, isGod: true, role: 'orchestrator (god)' }
+        hive: { id: ORCHESTRATOR_ID, name: 'Michael', provider: orchestratorProvider, cwd: config.harnessHome!, isGod: true, role: 'orchestrator (orchestrator)' }
       });
       if (cancelled) { godSpawning.current = false; return; }
-      if (!res.ok) { godSpawning.current = false; useStore.getState().setGodStatus('failed'); return; }
-      const god: Agent = {
-        id: GOD_ID,
+      if (!res.ok) { godSpawning.current = false; useStore.getState().setOrchestratorStatus('failed'); return; }
+      const orchestrator: Agent = {
+        id: ORCHESTRATOR_ID,
         name: 'Michael',
         character: 'michael',
         accent: 'lemon',
-        description: 'god — runs the floor, triages requests, escalates only critical calls to you',
+        description: 'orchestrator — runs the floor, triages requests, escalates only critical calls to you',
         project: 'hive',
         tmuxTarget: '',
         cwd: config.harnessHome!,
@@ -367,13 +367,13 @@ export function useHive(config: HarnessConfig | null): void {
         currentStation: 'desk',
         ptyId: GOD_PTY,
         command: command.trim(),
-        provider: godProvider,
-        model: godModel,
+        provider: orchestratorProvider,
+        model: orchestratorModel,
         isGod: true,
         recentTextTs: Date.now()
       };
-      useStore.getState().addAgent(god);
-      useStore.getState().setGodStatus('ready');
+      useStore.getState().addAgent(orchestrator);
+      useStore.getState().setOrchestratorStatus('ready');
 
       // Kick Michael off once his TUI is up. Always re-enable remote control so
       // the human can approve permission prompts from their phone (best-effort — a
@@ -385,24 +385,24 @@ export function useHive(config: HarnessConfig | null): void {
       // jam together; the boot-grace window keeps the inbox-wake/drain loops off
       // Michael until he's settled. The live-PTY branch above skips this entirely.
       const resumedGod = res.resumed === true;
-      bootGraceUntil.current[GOD_ID] = Date.now() + BOOT_GRACE_MS;
+      bootGraceUntil.current[ORCHESTRATOR_ID] = Date.now() + BOOT_GRACE_MS;
       void (async () => {
         try {
-          const remoteCommand = remoteControlCommandForProvider(godProvider, 'Michael');
+          const remoteCommand = remoteControlCommandForProvider(orchestratorProvider, 'Michael');
           if (remoteCommand) {
             // settleMs pauses the chain ~1.5s after /remote-control before the
             // orientation prompt (fresh spawns only) is submitted next.
-            await submitToPty(GOD_PTY, remoteCommand, godProvider, REMOTE_CONTROL_SETTLE_MS);
+            await submitToPty(GOD_PTY, remoteCommand, orchestratorProvider, REMOTE_CONTROL_SETTLE_MS);
           }
           if (!cancelled && !resumedGod) {
-            // A type-into-tui god (Crush) can't ride its hive protocol on argv, so the
+            // A type-into-tui orchestrator (Crush) can't ride its hive protocol on argv, so the
             // main process hands it back as seedPrompt — type it FIRST (identity), then
             // the orientation kick. Serialized via writeChains so they can't jam. (ondev-b)
-            if (res.seedPrompt) await submitToPty(GOD_PTY, res.seedPrompt, godProvider);
-            await submitToPty(GOD_PTY, INITIAL_GOD_PROMPT, godProvider);
+            if (res.seedPrompt) await submitToPty(GOD_PTY, res.seedPrompt, orchestratorProvider);
+            await submitToPty(GOD_PTY, INITIAL_GOD_PROMPT, orchestratorProvider);
           }
         } catch { /* PTY may have died during startup */ }
-        finally { bootGraceUntil.current[GOD_ID] = 0; }
+        finally { bootGraceUntil.current[ORCHESTRATOR_ID] = 0; }
       })();
     }, 1200);
     return () => { cancelled = true; clearTimeout(t); };
@@ -471,9 +471,9 @@ export function useHive(config: HarnessConfig | null): void {
           || msg.includes('confirm')
           || msg.includes('needs your');
         if (needsHuman && !idleWaiting) {
-          // Only the god agent escalates to the human; sub-agents are autonomous
-          // and read as "waiting" (parked on god, not on you).
-          updateAgent(e.agentId, { status: self.isGod ? 'blocked' : 'waiting' });
+          // Only the orchestrator agent escalates to the human; sub-agents are autonomous
+          // and read as "waiting" (parked on orchestrator, not on you).
+          updateAgent(e.agentId, { status: (self.isOrchestrator || self.isGod) ? 'blocked' : 'waiting' });
         } else {
           // Idle notification — responded, nothing to do. Linger, don't flag.
           updateAgent(e.agentId, { status: 'idle', action: 'idle', carrying: undefined });
@@ -558,7 +558,7 @@ export function useHive(config: HarnessConfig | null): void {
       }
       seenTerminalHandoffs.current.add(msg.id);
       enqueueMessage(
-        GOD_ID,
+        ORCHESTRATOR_ID,
         [
           `Terminal handoff failed for ${msg.to}: ${msg.subject}`,
           '',
@@ -575,7 +575,7 @@ export function useHive(config: HarnessConfig | null): void {
   //     'working' — and BOTH delivery paths (#3 nudge, #4 queue-drain) are idle-gated,
   //     so the agent silently stops draining mail. usePtyParser has a 4s idle drift,
   //     but it's Claude-TUI-tuned AND only runs for the mounted terminal — a
-  //     backgrounded god gets none. This is the floor-wide, provider-agnostic backstop:
+  //     backgrounded orchestrator gets none. This is the floor-wide, provider-agnostic backstop:
   //     it reads each live PTY's lastOutputAt (already tracked in the main process) and
   //     flips any 'working' agent quiet for QUIESCE_IDLE_MS to idle so the nudge can
   //     drain it. Safe because a genuinely-working agent (incl. a long streaming tool)
@@ -632,7 +632,7 @@ export function useHive(config: HarnessConfig | null): void {
           if (fresh.length) {
             useStore.getState().enqueueMessage(
               a.id,
-              'You have new hive inbox message(s) — read your inbox, act on them now, and move handled ones to inbox/.done/. Act autonomously; only message god if you genuinely need a decision.'
+              'You have new hive inbox message(s) — read your inbox, act on them now, and move handled ones to inbox/.done/. Act autonomously; only message orchestrator if you genuinely need a decision.'
             );
             for (const m of fresh) seen.add(m.id);
           }
@@ -648,14 +648,14 @@ export function useHive(config: HarnessConfig | null): void {
   //     protocol back as `seedPrompt`; we TYPE it as the worker's first turn after a
   //     boot-grace (TUI finished painting), ONCE per agent. Routed through the SAME
   //     per-pty submit chain + boot-grace as the inbox-wake nudge so the seed and a
-  //     nudge can never jam onto one line. (god-as-Crush is seeded in its own boot
+  //     nudge can never jam onto one line. (orchestrator-as-Crush is seeded in its own boot
   //     sequence above; this covers workers.) (ondev-b)
   useEffect(() => {
     if (!config?.onboardingComplete) return;
     const iv = setInterval(() => {
       const { agents, updateAgent } = useStore.getState();
       for (const a of agents) {
-        if (!a.ptyId || a.isGod || !a.seedPrompt || seeded.current.has(a.id)) continue;
+        if (!a.ptyId || (a.isOrchestrator || a.isGod) || !a.seedPrompt || seeded.current.has(a.id)) continue;
         seeded.current.add(a.id);
         const ptyId = a.ptyId;
         const seed = a.seedPrompt;
@@ -837,7 +837,7 @@ export function useHive(config: HarnessConfig | null): void {
 
   // 5) Pipe inbound Slack messages into Michael's queue. The main-process Slack
   //    webhook server pushes each verified message here via IPC; enqueueing to
-  //    GOD_ID lands it in Michael's queue exactly as if the user had typed it
+  //    ORCHESTRATOR_ID lands it in Michael's queue exactly as if the user had typed it
   //    into the composer — effect #4 above then drains it to his PTY.
   //    We immediately ack in the triggering thread and stash the thread coords
   //    so the office can post its summary back later.
@@ -855,12 +855,12 @@ export function useHive(config: HarnessConfig | null): void {
       const slack = { channel: msg.channel, thread_ts: msg.thread_ts };
       // `text` (raw user request + any attachment lines) drives the human-facing
       // kanban card title/description. The autonomy preamble — supplied verbatim
-      // by main, the authoritative source — is prepended ONLY to god's working
+      // by main, the authoritative source — is prepended ONLY to orchestrator's working
       // instruction (what gets typed into his PTY), so the board stays readable
-      // while every Slack-origin god-session runs under the autonomy policy. When
-      // main sends no preamble (older build), god just gets the raw text.
+      // while every Slack-origin orchestrator-session runs under the autonomy policy. When
+      // main sends no preamble (older build), orchestrator just gets the raw text.
       const instruction = msg.autonomyPreamble ? `${msg.autonomyPreamble}${text}` : undefined;
-      useStore.getState().enqueueMessage(GOD_ID, text, { slack, instruction });
+      useStore.getState().enqueueMessage(ORCHESTRATOR_ID, text, { slack, instruction });
       // Immediate "queued" acknowledgement in the originating Slack thread.
       void window.cth.slackReply({
         channel: msg.channel,
@@ -1060,8 +1060,8 @@ export function useHive(config: HarnessConfig | null): void {
         // a rebuilt one only if it predates the persisted `command` field.
         const command = (a.command ?? '').trim() || buildSpawnCommand(cfg, a.model, provider);
         const [exe, ...args] = tokenizeCommand(command);
-        const hive = a.isGod
-          ? { id: a.id, name: a.name, cwd, provider, isGod: true, role: 'orchestrator (god)' }
+        const hive = (a.isOrchestrator || a.isGod)
+          ? { id: a.id, name: a.name, cwd, provider, isGod: true, role: 'orchestrator (orchestrator)' }
           : a.isAssistant
           ? { id: a.id, name: a.name, cwd, provider, isAssistant: true, role: "Michael's prep assistant" }
           : { id: a.id, name: a.name, cwd, provider, role: a.description };

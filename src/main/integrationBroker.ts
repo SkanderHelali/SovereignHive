@@ -4,7 +4,7 @@
  * A 127.0.0.1-only HTTP proxy. An ephemeral worker calls
  *   <METHOD> http://127.0.0.1:<port>/i/<integrationId>/<path...>
  * authenticating with a PER-WORKER CAPABILITY TOKEN (a handle, NOT any secret) in the
- * `Authorization: Bearer` / `X-MD-Broker-Token` header. The broker validates the token,
+ * `Authorization: Bearer` / `X-SH-Broker-Token` header. The broker validates the token,
  * authorizes the integration, decrypts the integration's real secret, injects it as the
  * upstream auth header, forwards to the integration's baseUrl, and streams the response
  * back. The worker uses the integration WITHOUT EVER SEEING the credential.
@@ -44,7 +44,7 @@ const HOP_BY_HOP = new Set([
 ]);
 /** Request headers the worker is NEVER allowed to pass upstream. */
 const STRIP_REQUEST = new Set([
-  'authorization', 'x-md-broker-token', 'host', 'cookie', 'content-length', ...HOP_BY_HOP
+  'authorization', 'x-sh-broker-token', 'x-md-broker-token', 'host', 'cookie', 'content-length', ...HOP_BY_HOP
 ]);
 /** Response headers never forwarded back (fetch already decodes the body, so the
  *  upstream content-encoding/length would be wrong). */
@@ -157,9 +157,9 @@ export class IntegrationBroker {
     res.end(JSON.stringify({ error: message, code }));
   }
 
-  /** Extract the bearer/x-md-broker-token from the request. */
+  /** Extract the bearer/x-sh-broker-token from the request. */
   private static tokenFrom(req: IncomingMessage): string | undefined {
-    const x = req.headers['x-md-broker-token'];
+    const x = req.headers['x-sh-broker-token'] || req.headers['x-md-broker-token'];
     if (typeof x === 'string' && x) return x;
     const auth = req.headers['authorization'];
     if (typeof auth === 'string') {

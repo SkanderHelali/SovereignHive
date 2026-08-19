@@ -65,10 +65,16 @@ export interface HarnessConfig {
   defaultCommand: string;
   /** Default model for newly spawned agents (e.g. 'claude-sonnet-4-6[1m]'); unset = CLI default. */
   defaultModel?: string;
-  /** Which provider+model powers the GOD orchestrator ("Michael"). Default
-   *  'claude' / 'claude-opus-4-8'. Mirrors src/main/config.ts. */
+  /** Which provider+model powers the orchestrator ("Michael"). Default
+   *  'claude' / 'claude-opus-4-8'. Mirrors src/main/config.ts.
+   *  @deprecated Use orchestratorProvider / orchestratorModel */
   godProvider?: AgentProvider;
+  /** @deprecated Use orchestratorModel */
   godModel?: string;
+  /** Alias for godProvider. */
+  orchestratorProvider?: AgentProvider;
+  /** Alias for godModel. */
+  orchestratorModel?: string;
   /** Per-server consent for the default MCP bundle, keyed by catalog id (mirrors
    *  src/main/config.ts; seeded from MCP_CATALOG). */
   mcpDefaults?: { [id: string]: { enabled: boolean } };

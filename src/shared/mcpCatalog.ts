@@ -26,7 +26,7 @@ export type McpTier = 'safe-readonly' | 'write' | 'secret';
 
 export interface McpCatalogEntry {
   /** Stable catalog id (also the consent key in `config.mcpDefaults`). The merge
-   *  step namespaces the written server id (e.g. `munder-<id>`) to avoid clobbering
+   *  step namespaces the written server id (e.g. `sh-<id>`) to avoid clobbering
    *  a user's own `~/.claude` MCP server of the same name. */
   id: string;
   /** Human label for the consent UI. */

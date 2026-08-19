@@ -395,7 +395,7 @@ export function postSlackReply(opts: {
 
 /** Per-session shared secret + lazy bot-token accessor for the reply endpoint. */
 export interface SlackReplyServerOptions {
-  /** Secret the helper must echo in the `x-md-reply-token` header. */
+  /** Secret the helper must echo in the `x-sh-reply-token` header. */
   token: string;
   /** Latest bot token, read lazily so a config change is picked up at reply time. */
   getBotToken: () => string | undefined;
@@ -409,7 +409,7 @@ export interface SlackReplyServerOptions {
  * Loopback-only HTTP endpoint that lets a bundled helper script post a Slack
  * reply WITHOUT ever seeing the bot token. It binds to `127.0.0.1` exclusively
  * and is NEVER placed behind the public tunnel (only the webhook port is
- * forwarded). Every request must carry the per-session `x-md-reply-token`
+ * forwarded). Every request must carry the per-session `x-sh-reply-token`
  * header; non-loopback peers are refused even though the bind already excludes
  * them (defense in depth). Main writes `{ port, token }` to
  * `<userData>/slack-reply.json` so the helper can find this socket.
@@ -457,7 +457,7 @@ export class SlackReplyServer {
     if (req.method !== 'POST' || (req.url ?? '').split('?')[0] !== '/reply') {
       res.writeHead(404); res.end(); return;
     }
-    if (!this.checkToken(req.headers['x-md-reply-token'])) { res.writeHead(401); res.end(); return; }
+    if (!this.checkToken((req.headers['x-sh-reply-token'] || req.headers['x-md-reply-token']))) { res.writeHead(401); res.end(); return; }
 
     const chunks: Buffer[] = [];
     let size = 0;

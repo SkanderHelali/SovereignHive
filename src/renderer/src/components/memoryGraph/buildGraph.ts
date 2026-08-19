@@ -17,6 +17,7 @@ export interface AgentNode {
   accent: AccentColorName;
   status: StatusKind;
   isGod: boolean;
+  isOrchestrator?: boolean;
   /** number of message edges touching this agent (drives node size) */
   degree: number;
 }
@@ -63,6 +64,7 @@ export interface MinimalAgent {
   accent: AccentColorName;
   status: StatusKind;
   isGod?: boolean;
+  isOrchestrator?: boolean;
 }
 export interface MessageLogEntry {
   ts?: number;
@@ -119,27 +121,36 @@ export function buildGraph(
     const from = resolve(e.from);
     const to = resolve(e.to);
     if (!from || !to || from === to) continue;
-
-    const key = sortedPairKey(from, to);
-    const ts = typeof e.ts === 'number' ? e.ts : i; // fall back to log order
-    let p = pairs.get(key);
-    if (!p) {
-      const [a, b] = from < to ? [from, to] : [to, from];
-      p = { a, b, fwd: 0, bwd: 0, lastTs: -1 };
-      pairs.set(key, p);
+    degree.set(from, (degree.get(from) ?? 0) + 1);
+    degree.set(to, (degree.get(to) ?? 0) + 1);
+    const k = sortedPairKey(from, to);
+    const existing = pairs.get(k);
+    const isFwd = from < to;
+    if (!existing) {
+      pairs.set(k, {
+        a: isFwd ? from : to,
+        b: isFwd ? to : from,
+        fwd: isFwd ? 1 : 0,
+        bwd: isFwd ? 0 : 1,
+        lastTs: e.ts ?? 0,
+        lastAct: e.act,
+        lastSubject: e.subject
+      });
+    } else {
+      if (isFwd) existing.fwd++; else existing.bwd++;
+      if ((e.ts ?? 0) >= existing.lastTs) {
+        existing.lastTs = e.ts ?? existing.lastTs;
+        existing.lastAct = e.act ?? existing.lastAct;
+        existing.lastSubject = e.subject ?? existing.lastSubject;
+      }
     }
-    if (from === p.a) p.fwd++; else p.bwd++;
-    if (ts >= p.lastTs) { p.lastTs = ts; p.lastAct = e.act; p.lastSubject = e.subject; }
-
-    // degree counts agents only (pseudo nodes don't get sized)
-    if (byId.has(from)) degree.set(from, (degree.get(from) ?? 0) + 1);
-    if (byId.has(to)) degree.set(to, (degree.get(to) ?? 0) + 1);
   }
 
+  // ── assemble GraphData ────────────────────────────────────────────────────────
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
 
-  // agent nodes — only those that actually appear, plus god, to avoid lone dots.
+  // agent nodes — only those that actually appear, plus orchestrator, to avoid lone dots.
   // We include every roster agent so the floor is fully represented.
   for (const a of agents) {
     nodes.push({
@@ -149,6 +160,7 @@ export function buildGraph(
       accent: a.accent,
       status: a.status,
       isGod: !!a.isGod,
+      isOrchestrator: !!(a.isOrchestrator ?? a.isGod),
       degree: degree.get(a.id) ?? 0
     });
   }
