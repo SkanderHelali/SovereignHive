@@ -49,9 +49,12 @@ export interface HiveAgentMeta {
   role?: string;
   capabilities?: string[];
   cwd: string;
+  isOrchestrator?: boolean;
   isGod?: boolean;
   /** Michael's prep assistant — send-only; enriches prompts and forwards them. */
   isAssistant?: boolean;
+  npub?: string;
+  publicKey?: string;
 }
 
 export interface HiveMessage {
@@ -115,8 +118,11 @@ export interface AgentDirectoryEntry {
   /** Whether `cwd` is an absolute, existing directory (spawn-usable). */
   cwdValid: boolean | null;
   archived: boolean;
+  isOrchestrator?: boolean;
   isGod: boolean;
   isAssistant: boolean;
+  npub?: string;
+  publicKey?: string;
   sessionId: string | null;
   /** Whether the agent has recorded non-trivial memory beyond the seed header. */
   hasMemory: boolean;

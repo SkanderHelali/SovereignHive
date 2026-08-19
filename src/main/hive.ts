@@ -133,6 +133,9 @@ export interface AgentMeta {
   role?: string;
   capabilities?: string[];
   cwd: string;
+  /** Whether this agent is the hive orchestrator coordinator. */
+  isOrchestrator?: boolean;
+  /** Legacy alias for isOrchestrator. */
   isGod?: boolean;
   /** Michael's prep assistant — enriches prompts and forwards them to Michael.
    *  Send-only: excluded from broadcast fan-out so it never drains an inbox. */
@@ -166,6 +169,7 @@ export interface RegistryAgent extends AgentMeta {
 }
 
 export interface Registry {
+  orchestratorId?: string | null;
   godId: string | null;
   agents: Record<string, RegistryAgent>;
 }
@@ -1222,8 +1226,8 @@ export class HiveManager {
     const godId = reg.godId ?? 'god';
     // The hive has no separate human-approval queue — approvals are native to
     // each agent's Claude Code session (and approvable remotely). A message aimed
-    // at "human" is handled by the god/orchestrator, the human's proxy here.
-    const resolveTo = (to: string): string => (to === 'human' || to === 'god' ? godId : to);
+    // at "human" is handled by the orchestrator, the human's proxy here.
+    const resolveTo = (to: string): string => (to === 'human' || to === 'god' || to === 'orchestrator' ? godId : to);
     const targets = msg.to === 'broadcast'
       // The roster for fan-out is the ACTIVE registry: skip the send-only prep
       // assistant, any archived agent (closed tab), and providers that can't
@@ -1893,11 +1897,16 @@ export class HiveManager {
     try { writeFileSync(join(root, 'fleet.json'), JSON.stringify(snapshot, null, 2), 'utf8'); } catch { /* noop */ }
   }
 
-  /** Is this agent the hive's god/orchestrator? */
+  /** Is this agent the hive's orchestrator? */
+  isOrchestrator(agentId: string): boolean {
+    return this.isGod(agentId);
+  }
+
+  /** Legacy alias for isOrchestrator. */
   isGod(agentId: string): boolean {
     try {
       const reg = this.registry();
-      return reg.godId === agentId || !!reg.agents[agentId]?.isGod;
+      return reg.godId === agentId || reg.orchestratorId === agentId || !!reg.agents[agentId]?.isOrchestrator || !!reg.agents[agentId]?.isGod;
     } catch { return false; }
   }
 

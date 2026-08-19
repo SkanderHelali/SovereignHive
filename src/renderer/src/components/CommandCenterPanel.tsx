@@ -470,7 +470,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
       const command = buildSpawnCommand(cfg, model, provider);
       const [exe, ...args] = tokenizeCommand(command.trim());
       const hive = a.isGod
-        ? { id: a.id, name: a.name, cwd: a.cwd, provider, isGod: true, role: 'orchestrator (god)' }
+        ? { id: a.id, name: a.name, cwd: a.cwd, provider, isGod: true, isOrchestrator: true, role: 'orchestrator' }
         : a.isAssistant
         ? { id: a.id, name: a.name, cwd: a.cwd, provider, isAssistant: true, role: "Michael's prep assistant" }
         : { id: a.id, name: a.name, cwd: a.cwd, provider, role: a.description };
@@ -672,7 +672,7 @@ function FloorTab({ seed }: { seed: { text: string; seq: number } }) {
                   border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
                   fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
                 }}
-              >{a.name}{a.isGod ? ' (god)' : ''}</button>
+              >{a.name}{a.isGod ? ' (orchestrator)' : ''}</button>
               <PixelBadge status={armed ? 'looping' : a.status} />
               {armed && <span title={breaker?.reason} style={{ color: 'var(--cth-coral)', fontSize: 12 }}>⚠</span>}
               <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--cth-ink-500)' }}>

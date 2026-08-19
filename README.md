@@ -172,7 +172,7 @@ SovereignHive/
 - [x] **Phase 1: Nostr Key Management:** Provision `secp256k1` (`npub`/`nsec`) keypairs per agent with `safeStorage` encryption.
 - [x] **Phase 2: NIP-44 / NIP-59 Transport:** End-to-end encrypted relay publishing (NIP-44 v2 / NIP-59) and subscription pool.
 - [x] **Phase 3: Mesh Routing Bridge:** Seamless outbox-to-relay egress and relay-to-inbox ingress across distributed agent nodes.
-- [ ] **Phase 4: Terminology & Core Protocol Refactor:** Clean up legacy names and schemas across state and IPC.
+- [x] **Phase 4: Terminology & Core Protocol Refactor:** Clean up legacy names and schemas across state and IPC.
 - [ ] **Phase 5: Sovereign Cypherpunk UI:** Overhaul visual theme, electric violet (`#8B5CF6`) palette, and customizable Nostr avatars.
 
 ---

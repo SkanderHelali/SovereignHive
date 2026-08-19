@@ -70,10 +70,16 @@ export interface Agent {
   /** the last prompt the user submitted to this agent in Claude Code —
    *  shown on the floor as a card above the seated avatar */
   lastPrompt?: string;
-  /** the orchestrator ("god") agent — seated in Michael's room, runs the floor */
+  /** the orchestrator coordinator agent — runs the floor */
+  isOrchestrator?: boolean;
+  /** legacy alias for isOrchestrator */
   isGod?: boolean;
+  /** Sovereign Nostr cryptographic public key (bech32 npub1...) */
+  npub?: string;
+  /** Nostr 32-byte hex public key */
+  publicKey?: string;
   /** Michael's prep assistant — send-only; enriches prompts and forwards them to
-   *  the god. Excluded from broadcast fan-out and from the restorable-dead sweep. */
+   *  the orchestrator. Excluded from broadcast fan-out and from the restorable-dead sweep. */
   isAssistant?: boolean;
   /** When git isolation is enabled, the dedicated worktree path the agent runs
    *  in (its own `agent/<id>` branch); undefined for shared-cwd agents. */
