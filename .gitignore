@@ -25,3 +25,9 @@ docs/media/*.mov
 
 # raw demo screen recordings — only the compressed docs/media/demo/*.mp4 are deployed
 docs/media/MunderDifflin*.mp4
+
+# Local planning, roadmap, and progress notes — not tracked in git
+NOSTR_REBRAND_PLAN.md
+PROGRESS.md
+*_PLAN.md
+
