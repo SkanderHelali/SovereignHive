@@ -651,6 +651,10 @@ export class HiveManager {
     }
     this.commit(`hive: register ${meta.id}`);
 
+    // If the router is already running, refresh Nostr ingress subscriptions so the
+    // newly provisioned agent starts receiving inbound relay messages immediately.
+    if (this.routerTimer) this.refreshNostrIngress();
+
     const env: Record<string, string> = {
       AGENT_ID: meta.id,
       AGENT_NAME: meta.name,
@@ -1399,6 +1403,18 @@ export class HiveManager {
     }
   }
 
+  /** Re-scan the registry and update relay subscription filters so newly-spawned
+   *  agents start receiving inbound Nostr messages without a full restart. */
+  refreshNostrIngress(): void {
+    try {
+      const reg = this.registry();
+      const activeIds = Object.keys(reg.agents).filter((id) => !reg.agents[id]?.archived);
+      this.nostrBridge.updateIngressSubscriptions(activeIds);
+    } catch (err) {
+      console.error('[hive-nostr] Failed to refresh Nostr ingress:', err);
+    }
+  }
+
   routeOnce(): number {
     const root = this.root();
     if (!root) return 0;
@@ -1417,20 +1433,48 @@ export class HiveManager {
           msg.from = id; // sender is authoritative — the owning directory
 
           if (this.nostrBridge.isNostrRecipient(msg.to)) {
-            // Egress: Remote Nostr destination (npub/hex) via NIP-59 relay transport
+            // Egress: Remote Nostr destination (npub/hex) via NIP-59 relay transport.
+            // Move to .sending/ while in-flight so we don't re-process it on the
+            // next poll tick, then archive to .sent/ on success or .failed/ on error.
+            const sendingDir = join(outbox, '.sending');
+            if (!existsSync(sendingDir)) mkdirSync(sendingDir, { recursive: true });
+            const stagingPath = join(sendingDir, f);
+            renameSync(full, stagingPath);
+
             this.nostrBridge.routeOutboxToRelays(id, msg as unknown as HiveMessageBridgeTarget).then((res) => {
+              const sentDir = join(outbox, '.sent');
+              if (!existsSync(sentDir)) mkdirSync(sentDir, { recursive: true });
               if (res.success) {
                 this.appendLog({ kind: 'nostr_egress', agentId: id, to: msg.to, relays: res.relays, id: msg.id });
+                try { renameSync(stagingPath, join(sentDir, f)); } catch { /* noop */ }
               } else {
                 this.appendLog({ kind: 'nostr_egress_failed', agentId: id, to: msg.to, error: res.error, id: msg.id });
+                // Move to .failed/ for potential retry and bounce a note to the sender's inbox.
+                const failedDir = join(outbox, '.failed');
+                if (!existsSync(failedDir)) mkdirSync(failedDir, { recursive: true });
+                try { renameSync(stagingPath, join(failedDir, f)); } catch { /* noop */ }
+                try {
+                  const bounce: HiveMessage = this.normalize({
+                    to: id,
+                    act: 'inform',
+                    subject: `[relay-bounce] Failed to deliver message to ${msg.to}`,
+                    body: `Your message "${msg.subject}" could not be delivered via Nostr relays: ${res.error ?? 'unknown error'}. The original message has been saved in your outbox/.failed/ directory.`
+                  }, 'system');
+                  this.routeMessage(bounce);
+                } catch { /* best effort bounce */ }
               }
+            }).catch((err) => {
+              this.appendLog({ kind: 'nostr_egress_failed', agentId: id, to: msg.to, error: String(err), id: msg.id });
+              const failedDir = join(outbox, '.failed');
+              if (!existsSync(failedDir)) try { mkdirSync(failedDir, { recursive: true }); } catch { /* noop */ }
+              try { renameSync(stagingPath, join(failedDir, f)); } catch { /* noop */ }
             });
           } else {
             // Local / roster delivery
             this.routeMessage(msg);
+            renameSync(full, join(outbox, '.sent', f)); // archive, don't reprocess
           }
 
-          renameSync(full, join(outbox, '.sent', f)); // archive, don't reprocess
           routed++;
         } catch {
           // malformed file — quarantine so we don't spin on it

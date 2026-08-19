@@ -209,8 +209,12 @@ export class NostrRouterBridge {
       : {}) as Partial<HiveMessageBridgeTarget>;
 
     const now = new Date(unwrapped.createdAt * 1000).toISOString();
+    // Sanitise the message id to prevent path-traversal from untrusted payloads.
+    const rawId = partial.id ?? `nostr-${giftWrapEvent.id.slice(0, 12)}`;
+    const safeId = String(rawId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
+
     const hiveMsg: HiveMessageBridgeTarget = {
-      id: partial.id ?? `nostr-${giftWrapEvent.id.slice(0, 12)}`,
+      id: safeId,
       conversation: partial.conversation ?? `conv-nostr-${unwrapped.senderPublicKey.slice(0, 8)}`,
       in_reply_to: partial.in_reply_to ?? null,
       from: senderNpub,

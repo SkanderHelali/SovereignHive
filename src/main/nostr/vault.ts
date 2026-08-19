@@ -68,9 +68,9 @@ export class NostrKeyVault {
     const p = this.vaultFilePath();
     const dir = dirname(p);
     if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
+      mkdirSync(dir, { recursive: true, mode: 0o700 });
     }
-    writeFileSync(p, JSON.stringify(vault, null, 2), 'utf8');
+    writeFileSync(p, JSON.stringify(vault, null, 2), { encoding: 'utf8', mode: 0o600 });
   }
 
   private encryptSecret(secret: string): string {
@@ -207,6 +207,9 @@ export class NostrKeyVault {
    * Delete an agent's stored keypair.
    */
   deleteKeyPair(agentId: string): boolean {
+    // Zero-fill the secret key buffer before evicting from memory.
+    const cached = this.inMemoryCache.get(agentId);
+    if (cached?.secretKey) cached.secretKey.fill(0);
     this.inMemoryCache.delete(agentId);
     const vault = this.readVault();
     if (!vault.keys[agentId]) return false;
