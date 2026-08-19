@@ -8,3 +8,4 @@ export * from './profile';
 export * from './encryption';
 export * from './giftwrap';
 export * from './relayClient';
+export * from './bridge';

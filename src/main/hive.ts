@@ -37,6 +37,7 @@ import {
 } from '../shared/agentProvider';
 import { MCP_CATALOG } from '../shared/mcpCatalog';
 import { expandTilde } from './fs';
+import { defaultVault, NostrRouterBridge, type HiveMessageBridgeTarget } from './nostr';
 
 /** The subset of HarnessConfig the hive consumes for the default-MCP merge.
  *  Kept as a local shape so hive.ts never imports the foundation-owned config
@@ -136,6 +137,12 @@ export interface AgentMeta {
   /** Michael's prep assistant — enriches prompts and forwards them to Michael.
    *  Send-only: excluded from broadcast fan-out so it never drains an inbox. */
   isAssistant?: boolean;
+  /** Sovereign Nostr cryptographic public key (bech32 npub1...). */
+  npub?: string;
+  /** Nostr 32-byte hex public key. */
+  publicKey?: string;
+  /** Optional NIP-05 identifier (e.g. agent@slothy.win). */
+  nip05?: string;
 }
 
 export interface RegistryAgent extends AgentMeta {
@@ -273,6 +280,12 @@ export class HiveManager {
   ) {}
 
   private routerTimer: NodeJS.Timeout | null = null;
+  private nostrBridge = new NostrRouterBridge();
+
+  /** Access the Nostr router bridge (relay transport and identity resolution). */
+  getNostrBridge(): NostrRouterBridge {
+    return this.nostrBridge;
+  }
 
   /** The embedded OTLP collector's loopback URL, set by the main process once the
    *  collector is bound (telemetry.ts). null = telemetry off → no OTel env is
@@ -598,6 +611,21 @@ export class HiveManager {
     // read by hooks, the roster and the worker watcher, none of which run a shell.
     if (meta.cwd) meta = { ...meta, cwd: expandTilde(meta.cwd) };
     const cwd = this.cwdValidity(meta.cwd);
+
+    // Provision or resolve cryptographic Nostr identity for agent
+    try {
+      const nostrIdentity = defaultVault.ensureIdentity(meta.id, {
+        nip05: meta.nip05
+      });
+      meta = {
+        ...meta,
+        npub: nostrIdentity.npub,
+        publicKey: nostrIdentity.publicKey
+      };
+    } catch {
+      // Non-fatal if running in headless/mock environments
+    }
+
     reg.agents[meta.id] = {
       ...prev,
       ...meta,
@@ -1055,12 +1083,16 @@ export class HiveManager {
 
   private identityText(meta: AgentMeta): string {
     const caps = (meta.capabilities ?? []).join(', ') || '—';
+    const npub = meta.npub ?? defaultVault.getIdentity(meta.id)?.npub;
+    const hex = meta.publicKey ?? defaultVault.getIdentity(meta.id)?.publicKey;
     return [
       `# ${meta.name} (${meta.id})`,
       '',
       `- Role: ${meta.role ?? (meta.isGod ? 'orchestrator (god)' : 'agent')}`,
       `- Capabilities: ${caps}`,
       `- Working directory: ${meta.cwd}`,
+      npub ? `- Nostr Identity (npub): \`${npub}\`` : '',
+      hex ? `- Nostr Public Key (hex): \`${hex}\`` : '',
       meta.isGod ? '- You are the **god / orchestrator**. You run the floor — keep awareness of the whole team, delegate execution, and personally own only the important calls (decomposition, sign-offs, conflicts, integration), not the grunt work.' : '',
       meta.isGod ? '- Monitor the team with `fleet.json` (live per-agent status/tokens/cost/breaker) and `registry.json`; full command reference in `COMMANDS.md`. `claude agents` does NOT list your hive siblings.' : '',
       ''
@@ -1308,17 +1340,59 @@ export class HiveManager {
     return delivered;
   }
 
-  // — router: drain outboxes → inboxes —
+  // — router: drain outboxes → inboxes + Nostr relay bridge —
 
   /** Poll-based router. Cheap and robust vs fs.watch quirks on macOS. */
   startRouter(intervalMs = 1500): void {
     if (this.routerTimer || !this.enabled()) return;
+    this.startNostrIngress();
     this.routerTimer = setInterval(() => {
       try { this.routeOnce(); } catch { /* keep the loop alive */ }
     }, intervalMs);
   }
+
   stopRouter(): void {
     if (this.routerTimer) { clearInterval(this.routerTimer); this.routerTimer = null; }
+    try { this.nostrBridge.stop(); } catch { /* best effort */ }
+  }
+
+  /** Start or refresh Nostr relay ingress listener for active agent identities. */
+  startNostrIngress(): void {
+    try {
+      const reg = this.registry();
+      const activeIds = Object.keys(reg.agents).filter((id) => !reg.agents[id]?.archived);
+      this.nostrBridge.startIngress(
+        {
+          agentDirResolver: (agentId: string) => this.agentDir(agentId),
+          onMessageReceived: (msg, recipientId) => {
+            this.appendLog({
+              kind: 'message',
+              from: msg.from,
+              to: recipientId,
+              act: msg.act,
+              subject: msg.subject,
+              id: msg.id
+            });
+            this.emit?.('hive:message', {
+              id: msg.id,
+              from: msg.from,
+              to: recipientId,
+              act: msg.act,
+              subject: msg.subject,
+              targets: [recipientId],
+              needsHuman: false
+            });
+            const agent = this.registry().agents[recipientId];
+            if (agent && !canReceiveInbox(agent.provider)) {
+              this.emitTerminalHandoff(msg as unknown as HiveMessage, recipientId);
+            }
+          }
+        },
+        activeIds
+      );
+    } catch (err) {
+      console.error('[hive-nostr] Failed to start Nostr ingress:', err);
+    }
   }
 
   routeOnce(): number {
@@ -1337,7 +1411,21 @@ export class HiveManager {
           const partial = JSON.parse(readFileSync(full, 'utf8')) as Partial<HiveMessage>;
           const msg = this.normalize(partial, id);
           msg.from = id; // sender is authoritative — the owning directory
-          this.routeMessage(msg);
+
+          if (this.nostrBridge.isNostrRecipient(msg.to)) {
+            // Egress: Remote Nostr destination (npub/hex) via NIP-59 relay transport
+            this.nostrBridge.routeOutboxToRelays(id, msg as unknown as HiveMessageBridgeTarget).then((res) => {
+              if (res.success) {
+                this.appendLog({ kind: 'nostr_egress', agentId: id, to: msg.to, relays: res.relays, id: msg.id });
+              } else {
+                this.appendLog({ kind: 'nostr_egress_failed', agentId: id, to: msg.to, error: res.error, id: msg.id });
+              }
+            });
+          } else {
+            // Local / roster delivery
+            this.routeMessage(msg);
+          }
+
           renameSync(full, join(outbox, '.sent', f)); // archive, don't reprocess
           routed++;
         } catch {
