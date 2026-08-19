@@ -42,21 +42,22 @@ stream, retrieval, reflection, and planning.
    `agents/<id>/` directory. Cross-agent delivery happens by the **router**
    (main process) moving messages from a sender's `outbox/` into a recipient's
    `inbox/`. No file is ever written by two processes.
-3. **God-mode autonomy, native HITL.** A privileged **god agent** (lives in
-   Michael's room) adjudicates cross-agent traffic. Routine requests
-   (clarifications, data asks, plan tweaks) it resolves itself and the system
-   keeps running fully autonomously. **Critical** items (destructive ops, spend,
-   scope changes, unresolvable conflicts) route to the god, who surfaces them to
-   the human natively in his own Claude Code session — there is no separate
-   approval queue. Tool-permission prompts are the HITL gate, and they're
-   approvable remotely from a phone via `/remote-control`.
-4. **Memory: markdown first.** Per-agent `memory.md` + shared blackboard, with a
+3. **Orchestrator autonomy, native HITL.** A privileged **orchestrator agent**
+   adjudicates cross-agent traffic. Routine requests (clarifications, data asks,
+   plan tweaks) it resolves itself and the system keeps running fully autonomously.
+   **Critical** items (destructive ops, spend, scope changes, unresolvable conflicts)
+   route to the orchestrator, who surfaces them to the human natively in its own
+   CLI session — there is no separate approval queue. Tool-permission prompts are
+   the HITL gate, and they're approvable remotely via remote control hooks.
+4. **Cryptographic Nostr Identity & Encrypted Relays.** Every agent possesses a
+   `secp256k1` keypair (`npub`/`nsec`). Messages addressed to remote agents (`npub1...`)
+   are encrypted using NIP-44 authenticated encryption and sealed with NIP-59 Gift
+   Wrapping before being published across Nostr relays.
+5. **Memory: markdown first.** Per-agent `memory.md` + shared blackboard, with a
    SQLite FTS index when keyword recall isn't enough. A heavyweight vector layer
    (Letta/Mem0/Zep) is *not* needed at 5–15 agents and is architecturally wrong
-   here (they want to own the agent runtime; our runtime is the `claude` CLI).
-   Optional future upgrade: **MemPalace over MCP** (validate its retrieval first —
-   its public benchmarks are overstated per independent audit).
-5. **Autonomous loop = `Stop` hook.** An agent that finishes drains its inbox via
+   here (they want to own the agent runtime; our runtime is the CLI).
+6. **Autonomous loop = `Stop` hook.** An agent that finishes drains its inbox via
    a `Stop` hook that returns `{"decision":"block","reason":…}` to keep it
    working, guarded by `stop_hook_active` to prevent infinite loops.
 
@@ -69,16 +70,17 @@ Lives under `<harnessHome>/hive/`, a git repo committed only by the main process
 ```
 hive/
   PROTOCOL.md            # the agent-facing contract (how to remember + message)
-  registry.json          # roster: every agent, role, capabilities, status, seat
+  registry.json          # roster: every agent, role, capabilities, status, npub, seat
   board.md               # shared blackboard / co-authored plans
   tasks.json             # task ledger (id, assignee, spec, status, result ref)
   log.jsonl              # append-only event feed (drives the UI activity stream)
   agents/<agentId>/
-    identity.md          # who am I, my role, my capabilities  (read at start)
+    identity.md          # who am I, my role, npub, capabilities  (read at start)
     memory.md            # my long-term memory  (I read at start, append as I learn)
     inbox/               # messages delivered TO me — <ts>-<msgid>.json
     inbox/.done/         # processed messages (kept for audit, not deleted)
     outbox/              # messages I want to SEND — router drains these
+    outbox/.sending/     # staged outgoing messages in flight to relays
     cursor.json          # { lastProcessed: <msgid> }  — avoids reprocessing
 ```
 
@@ -86,7 +88,7 @@ Design rules that make this robust:
 - **One JSON file per message**, written via temp-file + atomic `rename` — never
   a co-edited shared mailbox file (those conflict under git).
 - **Append-only** `log.jsonl`; consumers track their own cursor.
-- `board.md` is the one genuinely co-edited file — it goes through the god agent
+- `board.md` is the one genuinely co-edited file — it goes through the orchestrator agent
   (single scribe) to avoid conflicts.
 
 ---

@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-08-19
+
+**The Sovereign Agent Mesh** — Nostr cryptographic identity, End-to-End Encrypted relay transport (NIP-44 & NIP-59), dynamic outbox/inbox relay bridge, and a complete Sovereign Cypherpunk visual overhaul.
+
+### Added
+
+- **Nostr Cryptographic Foundation (`secp256k1` / NIP-01)**: Every provisioned agent gets its own keypair (`npub` / `nsec`), stored encrypted at rest with Electron `safeStorage`. Public profile metadata (kind 0) is generated automatically.
+- **NIP-44 v2 & NIP-59 E2EE Relay Transport**: Inter-agent messages can now be encrypted end-to-end using NIP-44 authenticated encryption (XChaCha20-Poly1305 + secp256k1 ECDH) and wrapped in NIP-59 Gift Wraps (`kind 1059`), Seals (`kind 13`), and Rumors (`kind 14`) to hide sender and recipient identities from relays.
+- **Dynamic Nostr Relay Router Bridge**: Seamlessly routes outbox payloads addressed to `npub1...` or 64-hex keys across Nostr relays with `.sending/` staging, `.sent/` archiving, and automatic bounce messaging on failure. Inbound subscription dynamically updates on agent spawn.
+- **Sovereign Cypherpunk Design System**: Dark Obsidian (`#0A0810` / `#120F1C`), Electric Nostr Violet (`#8B5CF6`), and Cyber Cyan (`#38BDF8`) theme with ambient mesh grid backgrounds.
+- **Sovereign Brand Mark & App Icons**: High-res multi-platform icons (`icon.svg`, `icon.png`, `icon.ico`, `logo.svg`, `logo.png`) featuring the honeycomb mesh and gold Nostr lightning bolt.
+
+### Fixed
+
+- **AppImage Startup (`ERR_REQUIRE_ESM`)**: Bundled ESM Nostr dependencies (`nostr-tools`, `@noble/curves`, `@noble/hashes`, `@scure/*`) directly into `out/main/index.js` via Rollup/Vite, eliminating runtime `require()` failures in Electron.
+- **Inbound Path Traversal Security**: Sanitized remote message IDs in NIP-59 gift wrap payloads before writing to local mailboxes.
+- **Key Vault Memory Zeroing**: Enforced `0o600` POSIX file permissions and zeroed memory buffers upon key deletion.
+- **Orchestrator Role Harmonization**: Replaced legacy `god` role labels, CSS selectors, and store state across 20+ components with backward-compatible aliases.
+
 ## [0.4.4] — 2026-08-18
 
 **Windows agents can finally talk to each other** — and the first run stops silently failing.
