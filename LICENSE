@@ -1,7 +1,70 @@
-MIT License
+# PolyForm Noncommercial License 1.0.0
 
 Copyright (c) 2026 SovereignHive Contributors (https://github.com/SkanderHelali/SovereignHive)
-Copyright (c) 2026 Chaitanya Giri (https://github.com/chaitanyagiri/munder-difflin)
+
+https://polyformproject.org/licenses/noncommercial/1.0.0
+
+## Purpose
+
+This license allows you to use the software only for noncommercial purposes.
+
+## Agreement
+
+In order to receive this license, you have to agree to its rules. The rules of this license are both terms of the license and conditions to each of the licenses granted in this license. If you do not agree to these rules, you do not have a license to the software.
+
+## Notices
+
+You must ensure that everyone who gets a copy of any part of the software from you also gets a copy of this license and all copyright notices for the software.
+
+## Copyright License
+
+The licensor grants you a copyright license for the software to do anything you would do with a copyright license for the software with one exception: You must not use the software in any commercial purpose.
+
+## Patent License
+
+The licensor grants you a patent license for the software that covers patent claims the licensor has some right to license, any time you would have a copyright license under Copyright License.
+
+## Noncommercial Purposes
+
+Noncommercial purposes are purposes that are not primarily intended for or directed towards commercial advantage or monetary compensation.
+
+Here are some examples:
+
+- personal use for personal projects
+- educational use in schools, colleges, and universities
+- research use for research purposes
+- development use to build and test software for other noncommercial purposes
+
+Here are some examples of commercial purposes:
+
+- business use by a company or other for-profit organization
+- software-as-a-service use to provide services to paying customers
+- hosting or managed service use for a fee
+
+## Fair Use
+
+You may have "fair use" rights for the software under the law. This license does not affect those rights.
+
+## No Other Rights
+
+These terms do not give you any patent license for anything other than the software. They do not give you any right to use trademarks, trade names, service marks, or logos of the licensor.
+
+## Defense In Depth
+
+As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.
+
+---
+
+# Third-Party & Upstream Notices
+
+### 1. Upstream Munder Difflin Components (MIT License)
+
+Portions of this software were originally developed as part of **Munder Difflin** by Chaitanya Giri:
+- Upstream Repository: https://github.com/chaitanyagiri/munder-difflin
+- Original License: MIT License
+
+```text
+Copyright (c) 2026 Chaitanya Giri
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,20 +83,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
 
----
+### 2. Bundled Pixel Art Assets (LimeZu Non-Commercial License)
 
-### Fork & Upstream Attribution
-SovereignHive is an independent fork of **Munder Difflin** by Chaitanya Giri:
-- Upstream Repository: https://github.com/chaitanyagiri/munder-difflin
-- Original Project License: MIT License (Copyright (c) 2026 Chaitanya Giri)
-
----
-
-### Note on Bundled Art Assets (Non-Commercial)
-This MIT License applies strictly to the **SOURCE CODE** of this project. It does NOT apply
-to the bundled pixel-art assets under `src/renderer/src/assets/` (tilesets, maps, and character sheets),
-which originate from LimeZu and are distributed under the **LimeZu FREE VERSION license — non-commercial use only**.
-The recolored sprites derived from those sheets inherit the same non-commercial restriction.
-See `src/renderer/src/assets/ATTRIBUTION.md` for details.
-To use this project commercially, replace those assets or obtain a commercial license from the asset creator.
+Pixel art assets under `src/renderer/src/assets/` (furniture, interior tilesets, and room maps) originate from LimeZu (https://limezu.itch.io/) and are distributed under the **LimeZu Free Version License (Non-Commercial Use Only)**. See `src/renderer/src/assets/ATTRIBUTION.md` for complete details.

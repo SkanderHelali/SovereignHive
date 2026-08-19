@@ -3,6 +3,7 @@
   "version": "0.4.4",
   "private": true,
   "description": "Sovereign, Nostr-native multi-agent coordination harness — end-to-end encrypted agent swarms with cryptographic identities on your machine.",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "main": "out/main/index.js",
   "author": "SovereignHive Contributors",
   "homepage": "https://slothy.win",

@@ -13,7 +13,7 @@ Wraps **[Claude Code](https://claude.com/claude-code)**, **Antigravity (Gemini)*
 </p>
 
 <p>
-  <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-8B5CF6.svg?style=flat-square"></a>
+  <a href="./LICENSE"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-8B5CF6.svg?style=flat-square"></a>
   <a href="https://github.com/SkanderHelali/SovereignHive"><img alt="Fork: Munder Difflin" src="https://img.shields.io/badge/fork-Munder%20Difflin-10B981.svg?style=flat-square"></a>
   <img alt="Identity: Nostr (NIP-01/44)" src="https://img.shields.io/badge/identity-Nostr%20%28NIP--01%2F44%29-8B5CF6.svg?style=flat-square">
   <img alt="Platform: macOS | Windows | Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-1F2937.svg?style=flat-square">
@@ -178,7 +178,7 @@ SovereignHive/
 ---
 
 ## License & Attribution
-
-* **Source Code:** Released under the [MIT License](./LICENSE) — Copyright (c) 2026 SovereignHive Contributors & Chaitanya Giri.
-* **Upstream Attribution:** Forked from [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin) by [Chaitanya Giri](https://github.com/chaitanyagiri).
-* **Art Asset Notice:** Bundled pixel art assets under `src/renderer/src/assets/` originate from [LimeZu](https://limezu.itch.io/) and are subject to the **LimeZu Free Version License (Non-Commercial Use Only)**. See [`ATTRIBUTION.md`](./src/renderer/src/assets/ATTRIBUTION.md).
+ 
+* **SovereignHive:** Licensed under the [PolyForm Noncommercial License 1.0.0](./LICENSE) (Non-Commercial / Personal Use Only) — Copyright (c) 2026 SovereignHive Contributors.
+* **Upstream Attribution:** Forked from [Munder Difflin](https://github.com/chaitanyagiri/munder-difflin) by [Chaitanya Giri](https://github.com/chaitanyagiri) under the MIT License.
+* **Art Asset Notice:** Bundled pixel art assets under `src/renderer/src/assets/` originate from [LimeZu](https://limezu.itch.io/) and are distributed under the **LimeZu Free Version License (Non-Commercial Use Only)**. See [`ATTRIBUTION.md`](./src/renderer/src/assets/ATTRIBUTION.md).
