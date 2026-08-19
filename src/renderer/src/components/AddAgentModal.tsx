@@ -28,7 +28,7 @@ import {
   isClaudeProvider
 } from '@/store/config';
 
-const ACCENTS: AccentColorName[] = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'peach'];
+const ACCENTS: AccentColorName[] = ['coral', 'mint', 'sky', 'lemon', 'lilac', 'peach', 'violet', 'cyan'];
 
 // OSS quick-pick chip styling (ondev-c) — mirrors the model-picker chips.
 const ossChip = (active: boolean, accent: AccentColorName): CSSProperties => ({

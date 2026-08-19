@@ -39,6 +39,7 @@ export interface NostrRelayConfig {
 }
 
 export const DEFAULT_NOSTR_RELAYS: readonly NostrRelayConfig[] = [
+  { url: 'wss://nostr.slothy.win', read: true, write: true },
   { url: 'wss://relay.damus.io', read: true, write: true },
   { url: 'wss://nos.lol', read: true, write: true },
   { url: 'wss://relay.primal.net', read: true, write: true },

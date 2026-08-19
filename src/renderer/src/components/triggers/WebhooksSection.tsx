@@ -228,7 +228,7 @@ function WebhookRow({ hook, url, serverRunning, onPatch, onDelete }: {
               onCopy={() => copy('secret', hook.secret)}
               copied={copied === 'secret'}
             />
-            <Hint>Callers echo this in the x-md-webhook-secret header.</Hint>
+            <Hint>Callers echo this in the x-sh-webhook-secret header.</Hint>
           </Field>
 
           <Field label="TRUST">

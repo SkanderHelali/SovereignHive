@@ -4,13 +4,13 @@
  *
  * MANY endpoints, ONE server, ONE tunnel. Endpoints are told apart by the id in
  * the request path, so adding a webhook costs no extra port and no extra tunnel:
- *   - POST /<webhookId>  + `x-md-webhook-secret: <that endpoint's secret>`
+ *   - POST /<webhookId>  + `x-sh-webhook-secret: <that endpoint's secret>`
  *       + JSON body matching THAT endpoint's user-editable schema
  *       → 200 `{ ok, token, taskId }`  when the endpoint's TriggerMode lets the
- *         message through (routed to god, kanban card created), or
+ *         message through (routed to orchestrator, kanban card created), or
  *       → 202 `{ ok, pending: true, token, status: 'awaiting-approval' }` when the
  *         mode holds it for the operator. Either way the caller gets its token.
- *   - GET  /<webhookId>  + `x-md-webhook-token: <token>` (or `?token=`)
+ *   - GET  /<webhookId>  + `x-sh-webhook-token: <token>` (or `?token=`)
  *       → returns ONLY that token's task status: `{ ok, status, title, result? }`.
  *   - POST / (bare) is an alias for the endpoint with id `legacy`, so a caller
  *     holding the pre-multi-endpoint URL keeps working across the upgrade.
@@ -54,7 +54,7 @@ import { validateAgainstSchema, type InboundKind } from '../shared/triggers';
 export interface WebhookEndpoint {
   id: string;
   name: string;
-  /** Shared secret the caller echoes in `x-md-webhook-secret`. Never leaves this class. */
+  /** Shared secret the caller echoes in `x-sh-webhook-secret`. Never leaves this class. */
   secret: string;
   /** User-editable JSON Schema (serialised) inbound bodies are checked against. */
   schema: string;
@@ -372,7 +372,7 @@ export class WebhookServer {
   }
 
   /**
-   * Constant-time check that `x-md-webhook-secret` equals THIS endpoint's secret.
+   * Constant-time check that `x-sh-webhook-secret` (or legacy `x-md-webhook-secret`) equals THIS endpoint's secret.
    * A length mismatch is itself a failure and short-circuits before the compare
    * (timingSafeEqual throws on unequal lengths).
    *
@@ -381,7 +381,9 @@ export class WebhookServer {
    * the same as "wrong secret" and answers with the same 401.
    */
   private verifySecret(req: IncomingMessage, endpoint: WebhookEndpoint | null): boolean {
-    const provided = req.headers['x-md-webhook-secret'];
+    const provided = req.headers['x-sh-webhook-secret']
+      ?? req.headers['x-hive-webhook-secret']
+      ?? req.headers['x-md-webhook-secret'];
     if (typeof provided !== 'string') return false;
     const a = Buffer.from(provided);
     const b = Buffer.from(endpoint ? endpoint.secret : this.decoySecret);
@@ -414,10 +416,12 @@ function parseSchema(schema: string): unknown {
   try { return JSON.parse(schema); } catch { return undefined; }
 }
 
-/** Pull the capability token from the `x-md-webhook-token` header, falling back
+/** Pull the capability token from the `x-sh-webhook-token` (or legacy `x-md-webhook-token`) header, falling back
  *  to a `?token=` query param. Header is preferred (kept out of URL/access logs). */
 function readToken(req: IncomingMessage): string {
-  const h = req.headers['x-md-webhook-token'];
+  const h = req.headers['x-sh-webhook-token']
+    ?? req.headers['x-hive-webhook-token']
+    ?? req.headers['x-md-webhook-token'];
   if (typeof h === 'string' && h.trim()) return h.trim();
   try {
     const url = new URL(req.url ?? '', 'http://localhost');

@@ -32,7 +32,11 @@ export const colors = {
     lilac: 0x9482d3,
     lilacLight: 0xe0daf2,
     peach: 0xd99168,
-    peachLight: 0xf3daca
+    peachLight: 0xf3daca,
+    violet: 0x8b5cf6,
+    violetLight: 0xede9fe,
+    cyan: 0x38bdf8,
+    cyanLight: 0xe0f2fe
   },
   status: {
     idle: 0xa199ab,
@@ -65,7 +69,7 @@ export const type = {
 export const tileSize = 32; // px — the world is built from 32×32 tiles
 
 export type AccentColorName =
-  | 'coral' | 'mint' | 'sky' | 'lemon' | 'lilac' | 'peach';
+  | 'coral' | 'mint' | 'sky' | 'lemon' | 'lilac' | 'peach' | 'violet' | 'cyan';
 
 export const accentByName: Record<AccentColorName, number> = {
   coral: colors.accent.coral,
@@ -73,7 +77,9 @@ export const accentByName: Record<AccentColorName, number> = {
   sky:   colors.accent.sky,
   lemon: colors.accent.lemon,
   lilac: colors.accent.lilac,
-  peach: colors.accent.peach
+  peach: colors.accent.peach,
+  violet: colors.accent.violet,
+  cyan: colors.accent.cyan
 };
 
 export const accentLightByName: Record<AccentColorName, number> = {
@@ -82,7 +88,9 @@ export const accentLightByName: Record<AccentColorName, number> = {
   sky:   colors.accent.skyLight,
   lemon: colors.accent.lemonLight,
   lilac: colors.accent.lilacLight,
-  peach: colors.accent.peachLight
+  peach: colors.accent.peachLight,
+  violet: colors.accent.violetLight,
+  cyan: colors.accent.cyanLight
 };
 
 // Convert 0xRRGGBB to "#RRGGBB"

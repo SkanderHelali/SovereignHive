@@ -81,10 +81,10 @@ const slackLabelStyle: CSSProperties = {
 /** The exact connect walkthrough shown behind the i icon. Steps 6 & 7 spell out
  *  the both-lists requirement: subscribe to message.channels / message.groups in
  *  BOTH "Subscribe to bot events" AND "Subscribe to events on behalf of users". */
-const SLACK_CONNECT_STEPS = `Connect Munder Difflin to Slack
+const SLACK_CONNECT_STEPS = `Connect Sovereign Hive to Slack
 
 1. api.slack.com/apps -> Create New App -> From scratch. Name it
-   "Munder Difflin" and pick your workspace.
+   "Sovereign Hive" and pick your workspace.
 2. Basic Information -> Signing Secret -> copy it into the
    "Signing secret" field here.
 3. OAuth & Permissions -> Bot Token Scopes: add
@@ -106,7 +106,7 @@ const SLACK_CONNECT_STEPS = `Connect Munder Difflin to Slack
      message.channels
      message.groups
 8. Save Changes, reinstall if Slack prompts, then invite the bot
-   to your channel:  /invite @MunderDifflin`;
+   to your channel:  /invite @SovereignHive`;
 
 /** The request/response contract shown behind the webhook i icon. Every webhook
  *  shares one server and one tunnel and is told apart by its id in the path, so
@@ -118,14 +118,14 @@ Every webhook has its own URL, its own secret and its own mode. They share one
 server and one tunnel; the id in the path says which one you are calling.
 
 Trigger work (POST <tunnel>/<webhookId>):
-  header  x-md-webhook-secret: <that webhook's secret>
+  header  x-sh-webhook-secret: <that webhook's secret>
   body    {"message": "do X for me", "title": "optional short title",
            "kind": "directive" | "communication", "from": "who is calling"}
   -> 200  {"ok": true, "token": "<capability token>", "taskId": "<card id>"}
   -> 202  {"ok": true, "status": "awaiting approval"}
 
 Check status (GET <tunnel>/<webhookId>):
-  header  x-md-webhook-token: <token>     (or  ?token=<token>)
+  header  x-sh-webhook-token: <token>     (or  ?token=<token>)
   -> 200  {"ok": true, "status": "todo|doing|blocked|done",
            "title": "...", "result": "<summary or null>"}
 
@@ -1298,6 +1298,74 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
                       <div style={{ height: 2, background: 'var(--cth-ink-300)' }} />
 
+                      {/* Nostr Sovereign Mesh Relay Network */}
+                      <div style={{
+                        display: 'flex', flexDirection: 'column', gap: 10,
+                        padding: 12,
+                        background: 'var(--cth-paper-100)',
+                        border: '1px solid var(--cth-violet)',
+                        borderRadius: 4,
+                        boxShadow: '0 2px 8px rgba(139, 92, 246, 0.08)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{
+                              fontFamily: 'var(--cth-font-mono)',
+                              fontSize: 14,
+                              color: 'var(--cth-violet)',
+                              fontWeight: 700
+                            }}>⚡ Nostr Sovereign Mesh</span>
+                            <span style={{
+                              fontFamily: 'var(--cth-font-display)',
+                              fontSize: 7,
+                              lineHeight: '10px',
+                              background: 'var(--cth-violet)',
+                              color: '#FFFFFF',
+                              padding: '2px 4px',
+                              borderRadius: 2
+                            }}>E2EE</span>
+                          </div>
+                          <span style={{
+                            fontSize: 11,
+                            fontFamily: 'var(--cth-font-mono)',
+                            color: 'var(--cth-mint)'
+                          }}>● 5 Relays Active</span>
+                        </div>
+
+                        <div style={{ fontSize: 12, lineHeight: '18px', color: 'var(--cth-ink-700)' }}>
+                          Decentralized end-to-end encrypted message transport between sovereign agent swarms using NIP-44 v2 (XChaCha20-Poly1305 + ECDH) and NIP-59 Gift Wraps.
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span style={slackLabelStyle}>Default Relay Pool</span>
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 3,
+                            fontFamily: 'var(--cth-font-mono)',
+                            fontSize: 11,
+                            background: 'var(--cth-cream-50)',
+                            padding: '6px 8px',
+                            border: '1px solid var(--cth-ink-100)',
+                            borderRadius: 3
+                          }}>
+                            <div style={{ color: 'var(--cth-violet)', fontWeight: 600 }}>• wss://nostr.slothy.win (Primary High-Performance)</div>
+                            <div style={{ color: 'var(--cth-ink-700)' }}>• wss://relay.damus.io</div>
+                            <div style={{ color: 'var(--cth-ink-700)' }}>• wss://nos.lol</div>
+                            <div style={{ color: 'var(--cth-ink-700)' }}>• wss://relay.primal.net</div>
+                            <div style={{ color: 'var(--cth-ink-700)' }}>• wss://nostr.mom</div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 11, color: 'var(--cth-ink-500)' }}>
+                          <span>Identity: <code>NIP-01 / NIP-19 (npub/nsec)</code></span>
+                          <span>Payload: <code>NIP-44 v2</code></span>
+                          <span>Envelope: <code>NIP-59 Kind 1059</code></span>
+                        </div>
+                      </div>
+
+                      <div style={{ height: 2, background: 'var(--cth-ink-300)' }} />
+
                       {/* Slack integration */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div style={{
@@ -1670,7 +1738,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
 
                         <span style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-500)' }}>
                           Callers POST to a webhook's URL with its secret in the{' '}
-                          <code>x-md-webhook-secret</code> header. Each one checks bodies against its own JSON
+                          <code>x-sh-webhook-secret</code> header. Each one checks bodies against its own JSON
                           schema — edit that in the Triggers tab of Michael's Command Center, where the history
                           of everything that arrived lives too.
                         </span>

@@ -26,6 +26,8 @@ export interface AgentCardProps {
   /** Context-window limit (tokens) assumed for the agent's model. */
   contextLimit?: number;
   selected?: boolean;
+  /** Sovereign Nostr public identity (bech32 npub1...). */
+  npub?: string;
   /** Your clone — gets a persistent accent frame + BOSS tag so it stands out.
    *  (`isGod` / the `god` agent id stay as-is internally; this is display only.) */
   isGod?: boolean;
@@ -52,7 +54,7 @@ const fmtK = (n: number): string => `${Math.round(n / 1000)}k`;
  */
 export function AgentCard({
   name, character, accent, status, ptyId, project, action, progress = 0,
-  contextTokens, contextLimit, selected, isGod, onClick,
+  contextTokens, contextLimit, selected, isGod, npub, onClick,
   doingCount = 0, onTaskNoteClick, draggable, note, onEditNote
 }: AgentCardProps) {
   const [hover, setHover] = useState(false);
@@ -202,6 +204,21 @@ export function AgentCard({
                     background: `var(--cth-${accent})`, color: 'var(--cth-ink-900)',
                     padding: '1px 4px 0', flexShrink: 0
                   }}>BOSS</span>
+                )}
+                {npub && (
+                  <span
+                    title={`Nostr Identity: ${npub}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(npub);
+                    }}
+                    style={{
+                      fontFamily: 'var(--cth-font-mono)', fontSize: 9, lineHeight: '11px',
+                      background: 'var(--cth-violet)', color: '#FFFFFF',
+                      padding: '1px 3px 0', borderRadius: 2, flexShrink: 0,
+                      cursor: 'copy', opacity: 0.9
+                    }}
+                  >⚡</span>
                 )}
               </span>
               {/* flexShrink:0 — the badge is a fixed 2-to-5 character chip; when

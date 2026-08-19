@@ -115,6 +115,26 @@ export function AgentDetailPanel({ agent }: AgentDetailPanelProps) {
               fontSize: 12, color: 'var(--cth-ink-500)',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
             }}>{agent.project}</span>
+            {agent.npub && (
+              <span
+                title={`Click to copy Nostr npub: ${agent.npub}`}
+                onClick={() => navigator.clipboard.writeText(agent.npub!)}
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'var(--cth-font-mono)',
+                  color: 'var(--cth-violet)',
+                  background: 'var(--cth-violet-light)',
+                  padding: '0 4px',
+                  borderRadius: 2,
+                  cursor: 'copy',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 2
+                }}
+              >
+                ⚡ {agent.npub.slice(0, 8)}…{agent.npub.slice(-4)}
+              </span>
+            )}
           </div>
         </div>
         {/* v0.3.4: the IDE lives at agent level (replaces the old files tab) —

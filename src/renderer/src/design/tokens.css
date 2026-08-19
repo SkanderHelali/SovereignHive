@@ -25,6 +25,8 @@
   --cth-lemon: #DCAB3C;       --cth-lemon-light: #F3E4BC;
   --cth-lilac: #9482D3;       --cth-lilac-light: #E0DAF2;
   --cth-peach: #D99168;       --cth-peach-light: #F3DACA;
+  --cth-violet: #8B5CF6;      --cth-violet-light: #EDE9FE;
+  --cth-cyan:  #38BDF8;       --cth-cyan-light:  #E0F2FE;
 
   /* Status — same recalibration; hue meanings unchanged */
   --cth-status-idle:     #A199AB;

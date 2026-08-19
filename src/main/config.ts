@@ -357,7 +357,7 @@ export interface HarnessConfig {
   // Nothing new should be written here.
   /** @deprecated Use `webhookTriggers[].enabled`. */
   webhookEnabled?: boolean;
-  /** App-generated shared secret callers echo in `x-md-webhook-secret`. Never
+  /** App-generated shared secret callers echo in `x-sh-webhook-secret`. Never
    *  logged, and never forwarded into the routed message/card/response.
    *  @deprecated Use `webhookTriggers[].secret` (one secret per endpoint, so
    *  revoking one caller never disturbs the others). */
