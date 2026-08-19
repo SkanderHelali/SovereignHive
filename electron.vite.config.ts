@@ -51,7 +51,19 @@ function copyMainSidecars() {
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin(), copyMainSidecars()],
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: [
+          'nostr-tools',
+          '@noble/curves',
+          '@noble/hashes',
+          '@scure/base',
+          '@scure/bip32',
+          '@scure/bip39'
+        ]
+      }),
+      copyMainSidecars()
+    ],
     define: defineMain,
     build: {
       rollupOptions: {

@@ -1,200 +1,43 @@
 'use strict';
 /**
- * Munder Difflin brand mark — Michael's portrait on the brand yellow tile.
+ * SovereignHive brand mark — Sovereign Cypherpunk Honeycomb & Nostr Lightning Bolt.
  *
- * THE SVG IS THE SOURCE OF TRUTH. docs/logo.svg is authored here as pure
- * vector — every sprite pixel is a run-merged <rect>, no fonts, no gradients,
- * no filters — so it renders identically in every browser and scales from a
- * 16px favicon to print. Every raster below is generated from the same geometry,
- * never traced back from a PNG.
- *
- * Grown out of the PH thumbnail (tools/make-ph-thumbnail.cjs): same sprite, same
- * flat brand ground, reframed as a mark.
- *
- * Writes, from one source:
- *   docs/logo.svg          source of truth (full bleed, ink border)
- *   docs/logo.png          512  — site favicon, site header (dark), in-app
- *                                 toolbar + app favicon, README header
- *   docs/logo-light.png    512  — site header on light theme (warm border)
- *   docs/favicon-32.png     32  — native-size favicon, so browsers stop
- *                                 downsampling a 512px portrait into mush
+ * THE SVG IS THE SOURCE OF TRUTH.
+ * Pure vector + self-contained mathematical distance-field rasterizer:
+ *   docs/logo.svg          source of truth vector (full bleed, electric violet border)
+ *   docs/logo.png          512  — site favicon, site header (dark), in-app toolbar
+ *   docs/logo-light.png    512  — light variant with cyan accents
+ *   docs/favicon-32.png     32  — native-size crisp favicon
  *   docs/apple-touch-icon.png 180
- *   build/icon.svg         design source for the app icon (margined)
- *   build/icon.png        1024  — Linux, and the electron-builder base
- *   build/icon.ico               — Windows, full bleed, 16..256
- *   build/icon.icns              — macOS, margined + drop shadow, 16..1024
+ *   build/icon.svg         app icon design source
+ *   build/icon.png        1024  — Linux AppImage, and electron-builder base
+ *   build/icon.ico               — Windows full-bleed multi-res ICO (16..256)
  *
- *   node tools/make-logo.cjs
+ *   node tools/make-sovereign-logo.cjs
  */
 
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
-const { execFileSync } = require('node:child_process');
 
-// Resolve from THIS file, not a hardcoded checkout: the path below pointed at a
-// different clone entirely, so running the generator here would have read that
-// repo's sprite and written its assets.
 const ROOT = path.resolve(__dirname, '..');
-const loadTs = require(path.join(ROOT, 'test/load-ts.cjs'));
-const art = loadTs('src/renderer/src/scene/office/portraitArt.ts');
 
-const SW = art.SCENE_W;
+// ── Palette (Inspired by helali.org + Nostr Cypherpunk) ───────────────────
+const PALETTE = {
+  obsidianDeep: [10, 8, 16],       // #0A0810 - Background
+  obsidianPaper: [18, 15, 28],     // #120F1C - Surface
+  obsidianSurface: [28, 22, 44],   // #1C162C - Elevated
+  violetGlow: [139, 92, 246],      // #8B5CF6 - Electric Violet
+  violetLight: [196, 181, 253],    // #C4B5FD - Violet highlight
+  violetDark: [76, 29, 149],       // #4C1D95 - Deep Violet mesh
+  cyanAccent: [56, 189, 248],      // #38BDF8 - Cyber Cyan
+  cyanLight: [186, 230, 253],      // #BAE6FD - Cyan highlight
+  goldBolt: [245, 158, 11],        // #F59E0B - Nostr Gold
+  goldLight: [253, 224, 71],       // #FDE047 - Core bolt highlight
+  white: [255, 255, 255]
+};
 
-// ── palette ───────────────────────────────────────────────────────────────
-const GROUND = [241, 181, 61];    // #F1B53D — brand yellow, sampled from the shipping icon
-const WHITE  = [250, 248, 244];
-const PUPIL  = [46, 38, 42];
-
-// Two border weights, matching the pair the site already ships: near-black for
-// dark surfaces, warm brown for the light theme (sampled from logo-light.png).
-const BORDERS = { ink: [26, 19, 32], warm: [110, 75, 12] };
-
-// Tile geometry, inherited from the old build/icon.svg so the new mark lands in
-// the same family. Ratios are of the TILE, so both framings stay proportional.
-const R_RADIUS = 144 / 800;
-const R_STROKE = 26 / 800;
-
-// Two framings from one source, used for different things:
-//   mark — full bleed. Site, README, favicons, in-app toolbar, Windows .ico.
-//          A transparent margin is dead space in every one of those.
-//   icon — macOS-style margined tile with a drop shadow, for the .icns.
-// Both framings are now FULL BLEED.
-//
-// The margined variant put a band of brand yellow between the tile edge and the
-// figure, and that gap is what made the sprite's outermost columns — the far
-// edge of the hair (rows 3-11) and the outer shoulder (rows 19-24), with the
-// face between them — read as two detached dark tabs rather than as Michael's
-// own silhouette. At Dock size they looked like the edges of other characters.
-//
-// Full bleed fixes it without touching a single sprite pixel: the figure meets
-// the tile, so those columns read as the outline they are. Cropping them off
-// instead was tried and was wrong — it cut away real hair and shoulder.
-const FRAMES = { mark: 0, icon: 0 };
-
-// ── sprite ────────────────────────────────────────────────────────────────
-/** Eyes dead centre: a mark looks AT you. (Canon pupils sit at the inner pixel.) */
-function centreEyes(base) {
-  const sp = Uint8ClampedArray.from(base);
-  const set = (x, y, c) => {
-    const i = (y * SW + x) * 4;
-    sp[i] = c[0]; sp[i + 1] = c[1]; sp[i + 2] = c[2]; sp[i + 3] = 255;
-  };
-  for (const x of [5, 6, 10, 11]) for (const y of [9, 10]) set(x, y, WHITE);
-  set(6, 9, PUPIL);
-  set(10, 9, PUPIL);
-  return sp;
-}
-
-// Sprite rows, measured not guessed: 1-17 head and hair, 18 shoulders,
-// 19-24 tie, 25+ torso. Carrying to 28 gives the tile something to clip, so the
-// bust is cut by the frame instead of floating above the bottom edge.
-const CROP_ROWS = 28;
-
-// Framing lifted from the thumbnail, whose proportions are the ones that work:
-// the FIGURE (14 columns wide, x2..x15 — not the full 18-wide sprite box) spans
-// 58% of the frame, with 5% air above the hair. That leaves the brand yellow
-// reading as a field, which matters — at small sizes the yellow is recognised
-// before the face is. Filling the frame edge to edge kills it.
-const R_FIGURE = 140 / 240;
-const R_HEADROOM = 12 / 240;
-
-/**
- * Sprite -> a grid of colour|null, one cell per sprite pixel.
- *
- * No contour is drawn, deliberately. The face only meets the ground at a few
- * cheek pixels — everywhere else the silhouette is dark hair and a navy suit,
- * both of which already separate hard from the yellow. A dilated outline just
- * fuses with the hair into a black mass.
- */
-function buildGrid(sprite) {
-  const gw = SW, gh = CROP_ROWS;
-  const cells = [];
-  for (let gy = 0; gy < gh; gy++) {
-    for (let gx = 0; gx < gw; gx++) {
-      const i = (gy * SW + gx) * 4;
-      if (sprite[i + 3] < 128) continue;
-      cells.push({ gx, gy, c: [sprite[i], sprite[i + 1], sprite[i + 2]] });
-    }
-  }
-  const ys = cells.map((c) => c.gy), xs = cells.map((c) => c.gx);
-  return {
-    gw, gh, cells,
-    x0: Math.min(...xs), x1: Math.max(...xs) + 1,
-    y0: Math.min(...ys), y1: Math.max(...ys) + 1
-  };
-}
-
-/** Place the grid in the tile at an INTEGER scale, bleeding off the bottom. */
-function layout(N, grid, frame) {
-  const margin = N * FRAMES[frame];
-  const tile = { x: margin, y: margin, w: N - 2 * margin, h: N - 2 * margin };
-  tile.r = tile.w * R_RADIUS;
-  const stroke = tile.w * R_STROKE;
-  // Integer scale keeps every sprite pixel square — the whole point of the mark.
-  // ROUNDED, not floored: flooring throws away up to a whole pixel of scale,
-  // which at 64px is a third of the figure. Overflow is clipped by the tile.
-  const scale = Math.max(1, Math.round((tile.w * R_FIGURE) / (grid.x1 - grid.x0)));
-  const drawnW = (grid.x1 - grid.x0) * scale;
-  return {
-    tile, stroke, scale,
-    ox: Math.round(tile.x + (tile.w - drawnW) / 2 - grid.x0 * scale),
-    oy: Math.round(tile.y + tile.h * R_HEADROOM - grid.y0 * scale)
-  };
-}
-
-// ── SVG ───────────────────────────────────────────────────────────────────
-/** Merge each row's identical-colour runs into one rect — fewer, cleaner nodes. */
-function runs(grid) {
-  const at = new Map(grid.cells.map((c) => [c.gy * grid.gw + c.gx, c.c]));
-  const out = [];
-  for (let gy = 0; gy < grid.gh; gy++) {
-    let start = null, cur = null;
-    const flush = (end) => { if (start !== null) out.push({ gy, gx: start, len: end - start, c: cur }); start = null; };
-    for (let gx = 0; gx <= grid.gw; gx++) {
-      const c = at.get(gy * grid.gw + gx);
-      const key = c ? c.join(',') : null;
-      if (key !== (cur ? cur.join(',') : null)) { flush(gx); if (c) { start = gx; cur = c; } else cur = null; }
-    }
-    flush(grid.gw);
-  }
-  return out;
-}
-
-const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();
-
-function buildSvg(N, grid, frame, border) {
-  const L = layout(N, grid, frame);
-  const t = L.tile, s = L.stroke;
-  // Stroke straddles the path, so inset by half of it — otherwise the border
-  // spills past the tile and gets clipped by the viewBox edge.
-  const rx = t.x + s / 2, ry = t.y + s / 2, rw = t.w - s, rh = t.h - s, rr = t.r - s / 2;
-  const body = runs(grid).map((r) => {
-    const x = L.ox + r.gx * L.scale, y = L.oy + r.gy * L.scale;
-    return `    <rect x="${x}" y="${y}" width="${r.len * L.scale}" height="${L.scale}" fill="${hex(r.c)}"/>`;
-  }).join('\n');
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${N}" height="${N}" viewBox="0 0 ${N} ${N}" shape-rendering="crispEdges">
-  <!-- Munder Difflin — the brand mark, and the source of truth for every raster
-       in build/ and docs/. Generated by tools/make-logo.cjs; edit that, not this.
-       Pure vector: no fonts, no gradients, no filters. -->
-  <title>Munder Difflin</title>
-  <defs>
-    <clipPath id="tile">
-      <rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" rx="${rr}"/>
-    </clipPath>
-  </defs>
-  <g clip-path="url(#tile)">
-    <rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="${hex(GROUND)}"/>
-${body}
-  </g>
-  <rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" rx="${rr}"
-        fill="none" stroke="${hex(border)}" stroke-width="${s}" shape-rendering="geometricPrecision"/>
-</svg>
-`;
-}
-
-// ── PNG ───────────────────────────────────────────────────────────────────
+// ── PNG Encoding ──────────────────────────────────────────────────────────
 const CRC = (() => {
   const t = new Int32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -220,12 +63,12 @@ function encodePng(N, rgba) {
   const stride = N * 4 + 1;
   const raw = Buffer.alloc(N * stride);
   for (let y = 0; y < N; y++) {
-    raw[y * stride] = 0;                                       // filter: none
+    raw[y * stride] = 0;
     rgba.copy(raw, y * stride + 1, y * N * 4, (y + 1) * N * 4);
   }
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(N, 0); ihdr.writeUInt32BE(N, 4);
-  ihdr[8] = 8; ihdr[9] = 6;                                    // 8-bit RGBA
+  ihdr[8] = 8; ihdr[9] = 6;
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
@@ -234,7 +77,7 @@ function encodePng(N, rgba) {
   ]);
 }
 
-/** Signed distance to a rounded rect — negative inside. */
+// ── Distance Field Math ───────────────────────────────────────────────────
 function sdRoundRect(px, py, x, y, w, h, r) {
   const cx = x + w / 2, cy = y + h / 2;
   const qx = Math.abs(px - cx) - (w / 2 - r), qy = Math.abs(py - cy) - (h / 2 - r);
@@ -242,67 +85,215 @@ function sdRoundRect(px, py, x, y, w, h, r) {
   return Math.hypot(ax, ay) + Math.min(Math.max(qx, qy), 0) - r;
 }
 
-const SS = 4;   // 4x4 supersampling — smooth tile edge, hard pixel-art edges
+function sdHexagon(px, py, cx, cy, r) {
+  const qx = Math.abs(px - cx), qy = Math.abs(py - cy);
+  const k = Math.sqrt(3);
+  const d = Math.max(qy - r, (qx * k + qy) * 0.5 - r);
+  return d;
+}
 
-/**
- * The tile is an analytic rounded rect, so its drop shadow is the SAME shape
- * offset down — no convolution needed, just a soft falloff on the distance
- * field. Exact at any size and effectively free.
- */
-function rasterise(N, grid, frame, border) {
-  const L = layout(N, grid, frame);
-  const t = L.tile, s = L.stroke;
-  const rx = t.x + s / 2, ry = t.y + s / 2, rw = t.w - s, rh = t.h - s, rr = t.r - s / 2;
-  const shadow = frame === 'icon' ? { dy: N * 0.020, blur: N * 0.030, a: 0.30 } : null;
+// Point in polygon test for lightning bolt
+function isPointInBolt(px, py) {
+  const poly = [
+    [540, 240],
+    [385, 500],
+    [485, 500],
+    [430, 770],
+    [640, 460],
+    [530, 460]
+  ];
 
-  const at = new Map(grid.cells.map((c) => [c.gy * grid.gw + c.gx, c.c]));
-  const spriteAt = (px, py) => {
-    const gx = Math.floor((px - L.ox) / L.scale), gy = Math.floor((py - L.oy) / L.scale);
-    return at.get(gy * grid.gw + gx) ?? null;
-  };
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1];
+    const xj = poly[j][0], yj = poly[j][1];
+    const intersect = ((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
 
+// ── Vector SVG Construction ───────────────────────────────────────────────
+function buildSvg(N = 1024, isLight = false) {
+  const bg = isLight ? '#0F0D1A' : '#0A0810';
+  const border = isLight ? '#38BDF8' : '#8B5CF6';
+  
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${N}" height="${N}" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1429" />
+      <stop offset="50%" stop-color="#0E0B18" />
+      <stop offset="100%" stop-color="#06040A" />
+    </linearGradient>
+
+    <linearGradient id="violetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#6D28D9" />
+    </linearGradient>
+
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="60%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <clipPath id="tileClip">
+      <rect x="32" y="32" width="960" height="960" rx="180" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#tileClip)">
+    <!-- Dark Cypherpunk Background -->
+    <rect x="32" y="32" width="960" height="960" fill="url(#bgGrad)" />
+
+    <!-- Honeycomb Mesh Network (Hexagons) -->
+    <!-- Top Center -->
+    <polygon points="512,180 620,242 620,366 512,428 404,366 404,242" fill="#1C1430" stroke="#8B5CF6" stroke-width="6" stroke-opacity="0.4" />
+    <!-- Top Right -->
+    <polygon points="730,305 838,367 838,491 730,553 622,491 622,367" fill="#151024" stroke="#38BDF8" stroke-width="6" stroke-opacity="0.3" />
+    <!-- Bottom Right -->
+    <polygon points="730,575 838,637 838,761 730,823 622,761 622,637" fill="#1C1430" stroke="#8B5CF6" stroke-width="6" stroke-opacity="0.3" />
+    <!-- Bottom Center -->
+    <polygon points="512,700 620,762 620,886 512,948 404,886 404,762" fill="#151024" stroke="#38BDF8" stroke-width="6" stroke-opacity="0.4" />
+    <!-- Bottom Left -->
+    <polygon points="294,575 402,637 402,761 294,823 186,761 186,637" fill="#1C1430" stroke="#8B5CF6" stroke-width="6" stroke-opacity="0.3" />
+    <!-- Top Left -->
+    <polygon points="294,305 402,367 402,491 294,553 186,491 186,367" fill="#151024" stroke="#38BDF8" stroke-width="6" stroke-opacity="0.3" />
+
+    <!-- Inter-node Mesh Connections -->
+    <line x1="512" y1="304" x2="730" y2="429" stroke="#8B5CF6" stroke-width="8" stroke-opacity="0.6" stroke-dasharray="12,12" />
+    <line x1="730" y1="429" x2="730" y2="699" stroke="#38BDF8" stroke-width="8" stroke-opacity="0.6" />
+    <line x1="730" y1="699" x2="512" y2="824" stroke="#8B5CF6" stroke-width="8" stroke-opacity="0.6" stroke-dasharray="12,12" />
+    <line x1="512" y1="824" x2="294" y2="699" stroke="#38BDF8" stroke-width="8" stroke-opacity="0.6" />
+    <line x1="294" y1="699" x2="294" y2="429" stroke="#8B5CF6" stroke-width="8" stroke-opacity="0.6" stroke-dasharray="12,12" />
+    <line x1="294" y1="429" x2="512" y2="304" stroke="#38BDF8" stroke-width="8" stroke-opacity="0.6" />
+
+    <!-- Central Sovereign Node Hexagon -->
+    <polygon points="512,330 680,427 680,621 512,718 344,621 344,427" fill="#241544" stroke="url(#violetGrad)" stroke-width="16" />
+    <polygon points="512,360 650,440 650,600 512,680 374,600 374,440" fill="#170B2E" stroke="#38BDF8" stroke-width="6" stroke-opacity="0.7" />
+
+    <!-- Electric Nostr Lightning Bolt -->
+    <path d="M 540,240 
+             L 385,500 
+             L 485,500 
+             L 430,770 
+             L 640,460 
+             L 530,460 
+             Z"
+          fill="url(#boltGrad)" 
+          stroke="#FFF" 
+          stroke-width="8"
+          filter="url(#neonGlow)" />
+
+    <!-- Peer Connection Nodes (Glowing dots) -->
+    <circle cx="512" cy="180" r="16" fill="#38BDF8" />
+    <circle cx="730" cy="305" r="16" fill="#8B5CF6" />
+    <circle cx="730" cy="823" r="16" fill="#38BDF8" />
+    <circle cx="512" cy="948" r="16" fill="#8B5CF6" />
+    <circle cx="186" cy="761" r="16" fill="#38BDF8" />
+    <circle cx="186" cy="367" r="16" fill="#8B5CF6" />
+  </g>
+
+  <!-- Cypherpunk Neon Frame Border -->
+  <rect x="32" y="32" width="960" height="960" rx="180" fill="none" stroke="${border}" stroke-width="24" />
+</svg>
+`;
+}
+
+// ── Multi-res Pixel Rasterizer ────────────────────────────────────────────
+function rasterise(N, isLight = false) {
+  const SS = 4;
   const out = Buffer.alloc(N * N * 4);
+  const border = isLight ? PALETTE.cyanAccent : PALETTE.violetGlow;
+
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
       let cov = 0, ink = 0, rSum = 0, gSum = 0, bSum = 0;
+
       for (let sy = 0; sy < SS; sy++) {
         for (let sx = 0; sx < SS; sx++) {
-          const px = x + (sx + 0.5) / SS, py = y + (sy + 0.5) / SS;
-          const d = sdRoundRect(px, py, rx, ry, rw, rh, rr);
-          if (d > s / 2) continue;                    // outside the stroke entirely
+          const px = ((x + (sx + 0.5) / SS) / N) * 1024;
+          const py = ((y + (sy + 0.5) / SS) / N) * 1024;
+
+          const dTile = sdRoundRect(px, py, 32, 32, 960, 960, 180);
+          if (dTile > 12) continue;
           cov++;
-          if (d > -s / 2) { ink++; continue; }        // within the border band
-          const c = spriteAt(px, py) ?? GROUND;
+
+          if (dTile > -12) {
+            ink++;
+            continue;
+          }
+
+          // Core art color sampling
+          const dHexCenter = sdHexagon(px, py, 512, 524, 180);
+          const dHexOuter = sdHexagon(px, py, 512, 524, 300);
+
+          let c = PALETTE.obsidianDeep;
+
+          // Background gradient
+          const gradT = (px + py) / 2048;
+          c = [
+            Math.round(PALETTE.obsidianPaper[0] * (1 - gradT) + PALETTE.obsidianDeep[0] * gradT),
+            Math.round(PALETTE.obsidianPaper[1] * (1 - gradT) + PALETTE.obsidianDeep[1] * gradT),
+            Math.round(PALETTE.obsidianPaper[2] * (1 - gradT) + PALETTE.obsidianDeep[2] * gradT)
+          ];
+
+          // Outer hex ring
+          if (dHexOuter <= 0 && dHexOuter > -15) {
+            c = PALETTE.violetDark;
+          }
+
+          // Center hex plate
+          if (dHexCenter <= 0) {
+            if (dHexCenter > -12) {
+              c = PALETTE.violetGlow;
+            } else if (dHexCenter > -20) {
+              c = PALETTE.cyanAccent;
+            } else {
+              c = PALETTE.obsidianSurface;
+            }
+          }
+
+          // Lightning Bolt check
+          const inBolt = isPointInBolt(px, py);
+          if (inBolt) {
+            const boltY = (py - 240) / 530;
+            c = [
+              Math.round(PALETTE.goldLight[0] * (1 - boltY) + PALETTE.goldBolt[0] * boltY),
+              Math.round(PALETTE.goldLight[1] * (1 - boltY) + PALETTE.goldBolt[1] * boltY),
+              Math.round(PALETTE.goldLight[2] * (1 - boltY) + PALETTE.goldBolt[2] * boltY)
+            ];
+          }
+
           rSum += c[0]; gSum += c[1]; bSum += c[2];
         }
       }
+
+      if (!cov) continue;
       const tileA = cov / (SS * SS);
-
-      let sa = 0;
-      if (shadow) {
-        const d = sdRoundRect(x + 0.5, y + 0.5 - shadow.dy, rx, ry, rw, rh, rr) - s / 2;
-        sa = Math.min(1, Math.max(0, 0.5 - d / shadow.blur)) * shadow.a;
-      }
-      if (!tileA && !sa) continue;
-
-      // Tile over shadow, straight (un-premultiplied) output.
-      const outA = tileA + sa * (1 - tileA);
-      const wT = tileA / outA, wS = 1 - wT;          // shadow colour is pure black
       const i = (y * N + x) * 4;
-      if (cov) {
-        out[i] = Math.round(((rSum + ink * border[0]) / cov) * wT);
-        out[i + 1] = Math.round(((gSum + ink * border[1]) / cov) * wT);
-        out[i + 2] = Math.round(((bSum + ink * border[2]) / cov) * wT);
-      }
-      void wS;                                        // black contributes nothing
-      out[i + 3] = Math.round(outA * 255);
+
+      out[i] = Math.round((rSum + ink * border[0]) / cov);
+      out[i + 1] = Math.round((gSum + ink * border[1]) / cov);
+      out[i + 2] = Math.round((bSum + ink * border[2]) / cov);
+      out[i + 3] = Math.round(tileA * 255);
     }
   }
+
   return encodePng(N, out);
 }
 
-// ── ICO ───────────────────────────────────────────────────────────────────
-/** ICO container of PNG entries (Vista+). 256px is encoded as width byte 0. */
+// ── ICO Container Builder ─────────────────────────────────────────────────
 function buildIco(pngs) {
   const dir = Buffer.alloc(6);
   dir.writeUInt16LE(0, 0); dir.writeUInt16LE(1, 2); dir.writeUInt16LE(pngs.length, 4);
@@ -321,42 +312,33 @@ function buildIco(pngs) {
   return Buffer.concat([dir, ...entries, ...bodies]);
 }
 
-// ── run ───────────────────────────────────────────────────────────────────
-const grid = buildGrid(centreEyes(art.sceneFrameBufs('michael').front[0]));
+// ── Generate All Brand & App Assets ───────────────────────────────────────
 const D = (p) => path.join(ROOT, p);
 const wrote = [];
 const write = (rel, buf) => {
-  fs.writeFileSync(D(rel), buf);
+  const full = D(rel);
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, buf);
   wrote.push(`${rel.padEnd(28)} ${(buf.length / 1024).toFixed(1)} KB`);
 };
 
-// Source of truth + the site/app rasters (full bleed).
-write('docs/logo.svg', Buffer.from(buildSvg(1024, grid, 'mark', BORDERS.ink)));
-write('docs/logo.png', rasterise(512, grid, 'mark', BORDERS.ink));
-write('docs/logo-light.png', rasterise(512, grid, 'mark', BORDERS.warm));
-write('docs/favicon-32.png', rasterise(32, grid, 'mark', BORDERS.ink));
-write('docs/apple-touch-icon.png', rasterise(180, grid, 'mark', BORDERS.ink));
+console.log('Generating SovereignHive Cypherpunk Icons & Brand Assets...');
 
-// App icons.
-write('build/icon.svg', Buffer.from(buildSvg(1024, grid, 'icon', BORDERS.ink)));
-write('build/icon.png', rasterise(1024, grid, 'icon', BORDERS.ink));
+// 1. Vector SVG Source
+write('docs/logo.svg', Buffer.from(buildSvg(1024, false)));
+write('build/icon.svg', Buffer.from(buildSvg(1024, false)));
+
+// 2. High Resolution PNGs
+write('docs/logo.png', rasterise(512, false));
+write('docs/logo-light.png', rasterise(512, true));
+write('docs/favicon-32.png', rasterise(32, false));
+write('docs/apple-touch-icon.png', rasterise(180, false));
+write('build/icon.png', rasterise(1024, false));
+
+// 3. Multi-resolution ICO (Windows)
 write('build/icon.ico', buildIco([16, 32, 48, 64, 128, 256].map((size) => ({
-  size, data: rasterise(size, grid, 'mark', BORDERS.ink)
+  size, data: rasterise(size, false)
 }))));
 
-// macOS .icns via iconutil, from a margined+shadowed iconset.
-const setDir = D('build/icon.iconset');
-fs.rmSync(setDir, { recursive: true, force: true });
-fs.mkdirSync(setDir, { recursive: true });
-for (const [name, size] of [
-  ['icon_16x16', 16], ['icon_16x16@2x', 32], ['icon_32x32', 32], ['icon_32x32@2x', 64],
-  ['icon_128x128', 128], ['icon_128x128@2x', 256], ['icon_256x256', 256],
-  ['icon_256x256@2x', 512], ['icon_512x512', 512], ['icon_512x512@2x', 1024]
-]) {
-  fs.writeFileSync(path.join(setDir, `${name}.png`), rasterise(size, grid, 'icon', BORDERS.ink));
-}
-execFileSync('iconutil', ['-c', 'icns', setDir, '-o', D('build/icon.icns')]);
-fs.rmSync(setDir, { recursive: true, force: true });
-wrote.push(`build/icon.icns              ${(fs.statSync(D('build/icon.icns')).size / 1024).toFixed(1)} KB`);
-
+console.log('\nGenerated Assets:');
 console.log(wrote.join('\n'));
