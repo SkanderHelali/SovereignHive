@@ -2038,14 +2038,17 @@ async function handleHireLink(link: string): Promise<void> {
   analytics.trackFeature('hire_install');
 }
 
-// Register the protocol. In dev (electron .) Windows needs the explicit
+// Register protocols. In dev (electron .) Windows needs the explicit
 // exe+args form or the registration points at electron.exe with no entry.
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('munderdifflin', process.execPath, [resolve(process.argv[1])]);
+const PROTOCOLS = ['sovereignhive', 'nostragent', 'munderdifflin'];
+for (const proto of PROTOCOLS) {
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(proto, process.execPath, [resolve(process.argv[1])]);
+    }
+  } else {
+    app.setAsDefaultProtocolClient(proto);
   }
-} else {
-  app.setAsDefaultProtocolClient('munderdifflin');
 }
 
 // Deep links on Windows/Linux arrive as the argv of a SECOND process — take the
@@ -2062,7 +2065,9 @@ if (!gotInstanceLock) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
-    const link = argv.find((a) => a.startsWith('munderdifflin://'));
+    const link = argv.find((a) =>
+      a.startsWith('sovereignhive://') || a.startsWith('nostragent://') || a.startsWith('munderdifflin://')
+    );
     if (link) void handleHireLink(link);
   });
 }
@@ -2114,7 +2119,7 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
     ...(geom && geom.x !== undefined && geom.y !== undefined ? { x: geom.x, y: geom.y } : {}),
     minWidth: MIN_WIN.width,
     minHeight: MIN_WIN.height,
-    title: isFloor ? 'Munder Difflin — Floor' : 'Munder Difflin',
+    title: isFloor ? 'Sovereign Hive — Floor' : 'Sovereign Hive',
     backgroundColor: '#FFF8E7',
     titleBarStyle: 'hiddenInset',
     show: false,
@@ -4736,7 +4741,9 @@ app.whenReady().then(() => {
   });
 
   // A cold-start deep link (Windows/Linux) rides in on OUR argv.
-  const startupHireLink = process.argv.find((a) => a.startsWith('munderdifflin://'));
+  const startupHireLink = process.argv.find((a) =>
+    a.startsWith('sovereignhive://') || a.startsWith('nostragent://') || a.startsWith('munderdifflin://')
+  );
   if (startupHireLink) void handleHireLink(startupHireLink);
 
   // Hand every spawned agent the path to the Slack reply discovery file via the

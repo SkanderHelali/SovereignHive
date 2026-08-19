@@ -206,10 +206,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         <PixelPanel
           variant="dialog"
           title={
-            step === 'persona' ? 'WELCOME TO MUNDER DIFFLIN'
+            step === 'persona' ? 'WELCOME TO SOVEREIGN HIVE'
             : step === 'welcome' ? 'MEET YOUR OFFICE'
             : step === 'home' ? (plain ? 'STEP 1 OF 4 · A HOME FOR THE APP' : 'STEP 1 OF 4 · HARNESS HOME')
-            : step === 'orchestrator' ? (plain ? "STEP 2 OF 4 · YOUR CLONE" : "STEP 2 OF 4 · YOUR CLONE'S ENGINE")
+            : step === 'orchestrator' ? (plain ? "STEP 2 OF 4 · YOUR ORCHESTRATOR" : "STEP 2 OF 4 · YOUR ORCHESTRATOR ENGINE")
             : step === 'repos' ? (plain ? 'STEP 3 OF 4 · YOUR PROJECTS' : 'STEP 3 OF 4 · YOUR REPOS')
             : step === 'permissions' ? 'STEP 4 OF 4 · PERMISSIONS & RELIABILITY'
             : 'ALL SET'
@@ -231,13 +231,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </div>
                   <div>
                     <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 12, lineHeight: '18px' }}>
-                      A CLONE OF YOU, WORKING 24/7
+                      SOVEREIGN AGENT MESH
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '19px' }}>
-                      Munder Difflin turns the CLI agent you already use into a clone of you —
-                      one that runs an office of long-running agents and keeps working while
-                      you're away. It manages everything around them: context, memory, tasks,
-                      triggers, environment, files, and integrations.
+                      Sovereign Hive turns the CLI agents you already use into an autonomous,
+                      cooperating swarm — coordinated by an orchestrator, empowered by Nostr
+                      cryptographic identities, and communicating securely via encrypted relays.
                       <span style={{ color: 'var(--cth-ink-500)' }}> Everything runs on this machine.</span>
                     </div>
                   </div>
@@ -617,7 +616,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <ToggleRow
                   icon="info"
                   label="SHARE ANONYMOUS USAGE STATS"
-                  desc="A handful of anonymous events (app opened, agent spawned, feature used) that help improve Munder Difflin — never prompts, code, file paths, or agent output. Full list in TELEMETRY.md; change anytime in Settings."
+                  desc="A handful of anonymous events (app opened, agent spawned, feature used) that help improve Sovereign Hive — never prompts, code, file paths, or agent output. Full list in TELEMETRY.md; change anytime in Settings."
                   on={shareStats}
                   tint="var(--cth-lemon-light)"
                   edge="var(--cth-lemon)"

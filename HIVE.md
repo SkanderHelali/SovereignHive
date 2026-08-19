@@ -1,8 +1,8 @@
 # The Hive — autonomous multi-agent layer
 
-> How Munder Difflin turns a room full of independent `claude`
+> How SovereignHive turns a room full of independent coding agent
 > processes into a collaborating, self-coordinating team with persistent memory,
-> a shared blackboard, and a "god" orchestrator that runs the floor.
+> a shared blackboard, and an orchestrator that runs the floor.
 
 This document is the design source of truth for the agent-collaboration layer. It
 sits alongside [`SPEC.md`](./SPEC.md) (terminal/event plane) and

@@ -44,7 +44,7 @@ import { reduceStatus, clampPercent, isNewer, type UpdateStatus } from '../share
  *      downgrade is per-check, not a permanent latch.
  */
 
-const REPO = 'chaitanyagiri/munder-difflin';
+const REPO = 'SkanderHelali/SovereignHive';
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6h
 const FALLBACK_CACHE_MS = 60 * 60 * 1000;     // 1h between releases/latest polls
 
@@ -127,7 +127,7 @@ function fallbackCheck(reason: string | undefined, force = false): void {
         hostname: 'api.github.com',
         path: `/repos/${REPO}/releases/latest`,
         method: 'GET',
-        headers: { 'User-Agent': 'munder-difflin-updater', Accept: 'application/vnd.github+json' },
+        headers: { 'User-Agent': 'sovereign-hive-updater', Accept: 'application/vnd.github+json' },
         timeout: 10_000
       },
       (res) => {
@@ -204,19 +204,11 @@ async function runDownload(): Promise<{ ok: boolean; error?: string }> {
  * Start the updater. Call once from app.whenReady with an accessor for the
  * primary window's webContents. Safe to call in dev (registers IPC, no polling).
  */
-/** DEV ONLY — a realistic release body for `update:simulate`.
- *
- *  Structurally a copy of the REAL v0.4.4 release body, not of CHANGELOG.md, and
- *  the difference is load-bearing: summarizeReleaseNotes digests the first section
- *  that yields list items, so it must skip a title, a marketing paragraph, a rule
- *  and a `> [!IMPORTANT]` block before reaching the bullets. Fed the CHANGELOG
- *  shape instead (bold lead paragraph, then `### Fixed`) it returns ONE bullet —
- *  the lead paragraph, clipped mid-sentence. Verified against the published
- *  v0.4.4-rc.1 body: this shape yields the same 3 bullets the real toast shows. */
-const SIMULATED_NOTES = `# Munder Difflin v9.9.9
+/** DEV ONLY — a realistic release body for `update:simulate`. */
+const SIMULATED_NOTES = `# Sovereign Hive v9.9.9
 
-**A local hive of Claude Code, Antigravity, Codex, Grok & Copilot agents that run themselves** —
-messaging, routing, and remembering, coordinated by your clone, Michael, who you talk to.
+**Sovereign, Nostr-native multi-agent coordination harness** —
+messaging, routing, and remembering, coordinated by your orchestrator.
 
 ---
 

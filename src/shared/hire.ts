@@ -23,7 +23,8 @@
 
 import { mcpCatalogEntry } from './mcpCatalog';
 
-export const HIRE_SPEC_V1 = 'munder-difflin/hire@1';
+export const HIRE_SPEC_V1 = 'sovereign-hive/hire@1';
+export const LEGACY_HIRE_SPEC_V1 = 'munder-difflin/hire@1';
 
 /** Skill ids bundled in app resources (the only values a hire manifest may request
  *  in the `skills` field). A manifest can never name an arbitrary skill path —
@@ -40,8 +41,8 @@ export const BUNDLED_SKILL_IDS: ReadonlySet<string> = new Set([
 export type HireProvider = 'claude' | 'antigravity' | 'codex';
 
 export interface HireManifest {
-  /** Spec tag; exactly `munder-difflin/hire@1` for this version. */
-  spec: typeof HIRE_SPEC_V1;
+  /** Spec tag; `sovereign-hive/hire@1` (or legacy `munder-difflin/hire@1`). */
+  spec: typeof HIRE_SPEC_V1 | typeof LEGACY_HIRE_SPEC_V1;
   /** Agent display name (also seeds the hive id). Required. */
   name: string;
   /** One-line role, e.g. "Documentation writer" — lands in identity.md + card. */
@@ -173,7 +174,7 @@ export function validateHireManifest(raw: unknown): HireValidation {
   }
   const o = raw as Record<string, unknown>;
 
-  if (o.spec !== HIRE_SPEC_V1) {
+  if (o.spec !== HIRE_SPEC_V1 && o.spec !== LEGACY_HIRE_SPEC_V1) {
     return { ok: false, errors: [`unsupported spec "${String(o.spec)}" (expected "${HIRE_SPEC_V1}")`] };
   }
 

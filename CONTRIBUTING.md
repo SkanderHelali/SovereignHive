@@ -1,8 +1,6 @@
-# Contributing to Munder Difflin
+# Contributing to SovereignHive
 
-Thanks for your interest! This is an early prototype, so there's a lot of surface
-area and plenty of room to help. This guide covers setup, the gotchas, and the
-conventions that keep the codebase coherent.
+Thanks for your interest! SovereignHive is an open-source, local-first multi-agent harness with Nostr cryptographic identity and E2E encrypted relay communication. This guide covers setup, gotchas, and conventions that keep the codebase coherent.
 
 ## Code of Conduct
 
@@ -13,21 +11,16 @@ participating, you agree to uphold it.
 
 ### Prerequisites
 
-- **macOS** — the app is macOS-first. Windows/Linux are untested but PRs that
-  improve cross-platform support are welcome.
+- **macOS, Linux, or Windows**
 - **Node.js 18+** and npm.
-- A **C/C++ toolchain** to build `node-pty`'s native addon. On macOS:
-  ```bash
-  xcode-select --install
-  ```
-- **[Claude Code](https://claude.com/claude-code)** on your `PATH` if you want
-  agents to actually run `claude` (the default command). Any other command works.
+- A **C/C++ toolchain** to build `node-pty` and `better-sqlite3` native addons.
+- At least one supported coding agent CLI (`claude`, `agy`, `codex`, `grok`, etc.).
 
 ### Install & run
 
 ```bash
-git clone <your-fork-url> munder-difflin
-cd munder-difflin
+git clone https://github.com/SkanderHelali/SovereignHive.git
+cd SovereignHive
 npm install        # postinstall rebuilds node-pty against Electron's ABI
 npm run dev        # live-reloading Electron build
 ```
