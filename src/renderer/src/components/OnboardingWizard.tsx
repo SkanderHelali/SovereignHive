@@ -4,6 +4,7 @@ import { PixelButton } from './PixelButton';
 import { Icon, type IconName } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
 import { ProviderLogo } from './ProviderLogo';
+import brandLogo from '@brand/logo.png?url';
 import { AGENT_PROVIDER_PRESETS, modelsForProvider, type AgentProvider, type HarnessConfig } from '@/store/config';
 import { canReceiveInbox, providerPreset } from '@shared/agentProvider';
 
@@ -28,16 +29,16 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     icon: 'mcp',
-    label: 'TEN ENGINES, ONE OFFICE',
+    label: 'TEN ENGINES, ONE SWARM',
     desc: 'Claude Code, Codex, Grok, Kimi, Antigravity, Qwen, OpenCode, Crush, pi & Copilot — live agents on one floor.',
     descPlain: 'Ten AI assistants — Claude, Codex, Gemini, Grok and more — working side by side in one shared office.',
     tint: 'var(--cth-lilac-light)', edge: 'var(--cth-lilac)'
   },
   {
     icon: 'gear',
-    label: 'MICHAEL IS YOUR CLONE',
-    desc: 'Your clone runs the floor — triages requests, routes tasks, and escalates only what needs you.',
-    descPlain: 'Your clone, Michael, takes your requests, hands work to the right agent, and only interrupts you when it matters.',
+    label: 'SOVEREIGN ORCHESTRATOR',
+    desc: 'Your orchestrator runs the floor — triages requests, routes tasks, and escalates only what needs you.',
+    descPlain: 'The orchestrator takes your requests, hands work to the right agent, and only interrupts you when it matters.',
     tint: 'var(--cth-sky-light)', edge: 'var(--cth-sky)'
   },
   {
@@ -138,7 +139,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // at the config-write boundary AND at ensureHarnessHome's mkdir, so every
   // downstream reader still sees one absolute path. No new IPC surface.
   useEffect(() => {
-    if (!home) setHome('~/HarnessAgents');
+    if (!home) setHome('~/SovereignHive');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -186,28 +187,20 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: 'var(--cth-cream-200)',
+      background: 'var(--cth-cream-50)',
       backgroundImage:
-        `repeating-linear-gradient(45deg, rgba(232, 217, 160, 0.4) 0 1px, transparent 1px 8px)`,
-      // Scroll the overlay rather than clip the wizard. Step 2 lists every
-      // installed CLI engine (8 rows + a model select), which is taller than a
-      // 1080p-class window once the OS chrome is subtracted — the panel was
-      // being cut off at BOTH edges with no way to reach the buttons.
+        `radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 70%), repeating-linear-gradient(45deg, rgba(139, 92, 246, 0.04) 0 1px, transparent 1px 10px)`,
       display: 'flex',
       overflowY: 'auto',
       zIndex: 200,
       padding: 32
     }}>
-      {/* `margin: auto` centers, NOT `align-items: center`. A centered flex item
-          that overflows its container is clipped at the TOP and unreachable by
-          scrolling (the overflow spills past the scroll origin); auto margins
-          center while it fits and collapse to a normal scroll once it doesn't. */}
       <div style={{ width: 640, maxWidth: '94vw', margin: 'auto' }}>
         <PixelPanel
           variant="dialog"
           title={
             step === 'persona' ? 'WELCOME TO SOVEREIGN HIVE'
-            : step === 'welcome' ? 'MEET YOUR OFFICE'
+            : step === 'welcome' ? 'MEET YOUR SWARM'
             : step === 'home' ? (plain ? 'STEP 1 OF 4 · A HOME FOR THE APP' : 'STEP 1 OF 4 · HARNESS HOME')
             : step === 'orchestrator' ? (plain ? "STEP 2 OF 4 · YOUR ORCHESTRATOR" : "STEP 2 OF 4 · YOUR ORCHESTRATOR ENGINE")
             : step === 'repos' ? (plain ? 'STEP 3 OF 4 · YOUR PROJECTS' : 'STEP 3 OF 4 · YOUR REPOS')
@@ -220,17 +213,18 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
             {step === 'persona' && (
               <>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
                   <div style={{
                     width: 56, height: 56, flexShrink: 0,
-                    background: 'var(--cth-sky-light)',
-                    boxShadow: 'inset 0 0 0 1.5px var(--cth-ink-500)',
-                    display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
+                    background: 'var(--cth-paper-100)',
+                    boxShadow: 'inset 0 0 0 1.5px var(--cth-violet), 0 0 12px rgba(139, 92, 246, 0.3)',
+                    borderRadius: 4,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                   }}>
-                    <SpritePortrait character="michael" scale={2} />
+                    <img src={brandLogo} alt="Sovereign Hive" style={{ width: 48, height: 48, objectFit: 'contain' }} />
                   </div>
                   <div>
-                    <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 12, lineHeight: '18px' }}>
+                    <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 12, lineHeight: '18px', color: 'var(--cth-violet)' }}>
                       SOVEREIGN AGENT MESH
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '19px' }}>
@@ -266,24 +260,25 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
             {step === 'welcome' && (
               <>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
                   <div style={{
                     width: 56, height: 56, flexShrink: 0,
-                    background: 'var(--cth-sky-light)',
-                    boxShadow: 'inset 0 0 0 1.5px var(--cth-ink-500)',
-                    display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden'
+                    background: 'var(--cth-paper-100)',
+                    boxShadow: 'inset 0 0 0 1.5px var(--cth-cyan), 0 0 12px rgba(56, 189, 248, 0.3)',
+                    borderRadius: 4,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                   }}>
-                    <SpritePortrait character="michael" scale={2} />
+                    <img src={brandLogo} alt="Sovereign Hive" style={{ width: 48, height: 48, objectFit: 'contain' }} />
                   </div>
                   <div>
                     <div style={{
                       fontFamily: 'var(--cth-font-display)',
-                      fontSize: 12, lineHeight: '18px'
-                    }}>YOUR CLONE AND THE FLOOR IT RUNS</div>
+                      fontSize: 12, lineHeight: '18px', color: 'var(--cth-cyan)'
+                    }}>SOVEREIGN SWARM & ORCHESTRATOR</div>
                     <div style={{ fontSize: 12, color: 'var(--cth-ink-700)', lineHeight: '18px' }}>
                       {plain
-                        ? "Your clone runs a small office of AI workers, and you watch it all from one screen. Here's what's inside:"
-                        : "Your clone coordinates a hive of AI coding agents — persistent, watchable, all local. Here's what's inside:"}
+                        ? "Your orchestrator coordinates a mesh of AI agents across your local machine. Here's what's inside:"
+                        : "Your orchestrator coordinates an autonomous swarm of AI agents — cryptographic, local, and encrypted. Here's what's inside:"}
                     </div>
                   </div>
                 </div>
@@ -298,18 +293,23 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     }}>
                       <div style={{
                         width: 28, height: 28, flexShrink: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'var(--cth-paper-100)',
-                        boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
+                        boxShadow: `inset 0 0 0 1px ${f.edge}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--cth-ink-900)'
                       }}>
                         <Icon name={f.icon} />
                       </div>
-                      <div style={{ minWidth: 0 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           fontFamily: 'var(--cth-font-display)',
-                          fontSize: 10, lineHeight: '14px', marginBottom: 3
-                        }}>{f.label}</div>
-                        <div style={{ fontSize: 12, lineHeight: '16px', color: 'var(--cth-ink-700)' }}>
+                          fontSize: 10, lineHeight: '14px', marginBottom: 2
+                        }}>
+                          {f.label}
+                        </div>
+                        <div style={{
+                          fontSize: 11, lineHeight: '16px', color: 'var(--cth-ink-700)'
+                        }}>
                           {plain ? f.descPlain : f.desc}
                         </div>
                       </div>
@@ -321,43 +321,35 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
             {step === 'home' && (
               <>
-                {plain ? (
-                  <p style={{ margin: 0, lineHeight: '22px' }}>
-                    Create a new, empty folder for the app to call home. Everything the app
-                    remembers — its own settings and your agents' memory — is stored here.
-                    Something like{' '}
-                    <code style={{ fontFamily: 'var(--cth-font-mono)', background: 'var(--cth-paper-100)', padding: '0 4px' }}>
-                      ~/HarnessAgents
-                    </code>{' '}
-                    works well. We'll create it for you if it doesn't exist.
-                  </p>
-                ) : (
-                  <p style={{ margin: 0, lineHeight: '22px' }}>
-                    Pick a folder where the harness will keep its own files — agent metadata,
-                    logs, and any new repos you create from here. Something like{' '}
-                    <code style={{ fontFamily: 'var(--cth-font-mono)', background: 'var(--cth-paper-100)', padding: '0 4px' }}>
-                      ~/HarnessAgents
-                    </code>{' '}
-                    is a fine default. We'll create it if it doesn't exist.
-                  </p>
-                )}
+                <p style={{ margin: 0, lineHeight: '22px' }}>
+                  {plain ? (
+                    <>Pick a folder where Sovereign Hive can keep its workspace. We recommend{' '}
+                    <code>~/SovereignHive</code> — it will be created automatically.</>
+                  ) : (
+                    <>Every agent's state, logs, and long-term memory live under a single harness
+                    directory. Default: <code>~/SovereignHive</code>.</>
+                  )}
+                </p>
+
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
+                    type="text"
                     value={home}
-                    onChange={(e) => setHome(e.target.value)}
-                    placeholder="/path/to/HarnessAgents"
-                    style={inputStyle}
+                    onChange={(e) => { setHome(e.target.value); setError(undefined); }}
+                    placeholder="~/SovereignHive"
+                    style={{
+                      flex: 1, padding: '8px 10px',
+                      background: 'var(--cth-paper-100)',
+                      boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+                      fontFamily: 'var(--cth-font-mono)', fontSize: 12,
+                      color: 'var(--cth-ink-900)'
+                    }}
                   />
                   <PixelButton variant="secondary" size="md" onClick={pickHome}>
                     <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
                       <Icon name="folder" /> {plain ? 'create / pick' : 'pick'}
                     </span>
                   </PixelButton>
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--cth-ink-500)' }}>
-                  {plain
-                    ? "You won't need to open this folder day-to-day — it's just where the app keeps its notes so nothing is lost when you restart."
-                    : 'Think of this as the "town hall." The harness pins agent state there so sessions can be picked back up after a restart.'}
                 </div>
               </>
             )}
@@ -366,18 +358,18 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <>
                 <p style={{ margin: 0, lineHeight: '22px' }}>
                   {plain ? (
-                    <><strong>Michael is your clone</strong> — he reads your requests, breaks
-                    them into tasks, and hands them to the right agent. He's the boss of the
-                    floor; you're still the boss of him. Choose which AI engine powers him.</>
+                    <><strong>The Orchestrator coordinates the swarm</strong> — it reads your requests, breaks
+                    them into tasks, and hands them to the right agent. It leads the
+                    floor; you're in full control. Choose which AI engine powers it.</>
                   ) : (
-                    <><strong>Michael is your clone</strong> — the boss of the floor you just
-                    met. He triages your requests, assigns tasks, and manages the team, while
+                    <><strong>The Orchestrator coordinates the swarm</strong> — the primary agent on the floor.
+                    It triages your requests, assigns tasks, and manages the team, while
                     escalating anything that genuinely needs you. Pick the engine and model that
-                    power him; give him a longer-context, higher-capability model.</>
+                    power it; give it a longer-context, higher-capability model.</>
                   )}
                 </p>
 
-                {/* What is a CLI agent / your clone — item 3 */}
+                {/* What is a CLI agent / your orchestrator — item 3 */}
                 <div style={{
                   display: 'flex', gap: 8, alignItems: 'flex-start', padding: 10,
                   background: 'var(--cth-lemon-light)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
@@ -388,13 +380,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     {plain ? (
                       <>A <strong>CLI agent</strong> is an AI coding assistant that runs on your
                       computer — popular ones are Claude Code (Anthropic), Codex (OpenAI) and
-                      Antigravity (Google Gemini). <strong>Your clone</strong> is the always-on
-                      one that runs your whole office. We recommend Claude Code on Opus 4.8 (1M).
+                      Antigravity (Google Gemini). <strong>Your orchestrator</strong> is the always-on
+                      agent that coordinates your swarm. We recommend Claude Code on Opus 4.8 (1M).
                       You can add or switch the others later.</>
                     ) : (
                       <>Each option is a <strong>CLI engine</strong> you have installed (Claude Code,
                       Codex, Antigravity/Gemini, or a local proxy like Qwen).
-                      <strong> Your clone</strong> (Michael) is the engine that orchestrates the whole
+                      <strong> Your orchestrator</strong> is the engine that coordinates the whole
                       hive. Recommended: Claude Code · Opus 4.8 · 1M — other providers can be wired
                       per agent later.</>
                     )}
@@ -731,8 +723,8 @@ function PersonaCard({ icon, title, desc, selected, onClick }: {
       style={{
         textAlign: 'left', cursor: 'pointer', border: 'none',
         padding: 12, display: 'flex', flexDirection: 'column', gap: 6,
-        background: selected ? 'var(--cth-mint-light)' : 'var(--cth-paper-100)',
-        boxShadow: `inset 0 0 0 ${selected ? 2 : 1}px ${selected ? 'var(--cth-mint)' : 'var(--cth-ink-300)'}`
+        background: selected ? 'var(--cth-violet-light)' : 'var(--cth-paper-100)',
+        boxShadow: `inset 0 0 0 ${selected ? 2 : 1}px ${selected ? 'var(--cth-violet)' : 'var(--cth-ink-300)'}`
       }}
     >
       <span style={{

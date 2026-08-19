@@ -2,15 +2,18 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-/* The app is a fixed cream/light design. Without declaring it, Chromium on a
-   dark-mode OS styles form controls with the DARK UA scheme — most visibly a
-   white (invisible) text caret on our cream textareas. */
-:root { color-scheme: light; }
+:root {
+  color-scheme: dark light;
+}
+
+:root[data-cth-theme='dark'] {
+  color-scheme: dark;
+}
 
 html, body, #root {
   margin: 0;
   height: 100%;
-  background: var(--cth-cream-100);
+  background: var(--cth-cream-50);
   color: var(--cth-ink-900);
   font-family: var(--cth-font-ui);
   font-size: var(--cth-text-body-md);
@@ -19,12 +22,13 @@ html, body, #root {
 }
 
 body {
-  /* tiny diagonal cream noise — pure CSS, no images */
+  /* Ambient cypherpunk mesh grid with subtle electric violet aura */
   background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.08) 0%, transparent 65%),
     repeating-linear-gradient(
       45deg,
-      rgba(232, 217, 160, 0.20) 0 1px,
-      transparent 1px 6px
+      rgba(139, 92, 246, 0.03) 0 1px,
+      transparent 1px 10px
     );
 }
 

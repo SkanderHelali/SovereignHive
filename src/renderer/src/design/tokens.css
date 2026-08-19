@@ -123,51 +123,43 @@
    to a narrow luminance band (0.36-0.44) so no single hue fluoresces against
    the black and colour never becomes the thing carrying the layout. */
 :root[data-cth-theme='dark'] {
-  /* Base surfaces — a graded elevation ramp, darkest where light mode was
-     lightest. Neutral with a whisper of the brand's violet warmth. */
-  --cth-cream-50:  #17171B;   /* app ground — dark, deliberately NOT black */
-  --cth-cream-100: #1D1D22;
-  --cth-cream-200: #26262C;
-  --cth-cream-300: #313139;
-  --cth-paper-100: #1A1A1F;   /* cards, inputs, terminals */
-  --cth-paper-200: #222229;
+  /* Base surfaces — Obsidian Cypherpunk elevation ramp with violet undertone */
+  --cth-cream-50:  #0A0810;   /* app ground — deep obsidian */
+  --cth-cream-100: #120F1C;   /* workspace surface */
+  --cth-cream-200: #1A1528;   /* secondary surfaces */
+  --cth-cream-300: #241D38;   /* hover / popovers */
+  --cth-paper-100: #141022;   /* cards, inputs, terminals */
+  --cth-paper-200: #1E1830;   /* active cards */
 
-  /* Ink → off-white text ramp (never #FFF — glare) */
-  --cth-ink-900: #DEDBD6;   /* 10.9-13.0:1 — primary text, warm off-white */
-  --cth-ink-700: #B3B0AC;   /*  7.0-8.3:1  — secondary text */
-  --cth-ink-500: #96919F;   /*  4.9-5.8:1  — tertiary / hints */
-  --cth-ink-300: #787684;   /*  3.4-4.0:1  — BORDERS. must stay >= 3.0 */
-  --cth-ink-100: #3E3D46;   /*  1.4-1.7:1  — dividers, meant to recede */
+  /* Ink → crisp off-white text ramp with cypherpunk clarity */
+  --cth-ink-900: #F3F0F7;   /* primary text */
+  --cth-ink-700: #C4BFD0;   /* secondary text */
+  --cth-ink-500: #8D859E;   /* tertiary / hints */
+  --cth-ink-300: #4B4164;   /* structural borders — electric violet tint */
+  --cth-ink-100: #262035;   /* dividers */
 
-  /* Accents — one step lighter/softer than the light set so they read on dark
-     without fluorescing */
-  --cth-coral: #E08C82;       --cth-mint:  #74C096;
-  --cth-sky:   #6FB3C4;       --cth-lemon: #CFAA57;
-  --cth-lilac: #A896E3;       --cth-peach: #DFA57F;
+  /* Accents — Sovereign Cypherpunk Neon */
+  --cth-violet: #8B5CF6;      --cth-violet-light: #24124D;
+  --cth-cyan:   #38BDF8;      --cth-cyan-light:   #0C334D;
+  --cth-lemon:  #F59E0B;      --cth-lemon-light:  #3D2808;
+  --cth-mint:   #10B981;      --cth-mint-light:   #063B2C;
+  --cth-coral:  #F43F5E;      --cth-coral-light:  #4C0D1B;
+  --cth-lilac:  #A78BFA;      --cth-lilac-light:  #2B1E4A;
+  --cth-peach:  #FB923C;      --cth-peach-light:  #4A1E08;
+  --cth-sky:    #06B6D4;      --cth-sky-light:    #083344;
 
-  /* Accent "-light" fills double as chip/selection backgrounds — deep muted
-     versions so light text (ink-900) stays readable on top. */
-  --cth-coral-light: #3B2724;
-  --cth-mint-light:  #1E3227;
-  --cth-sky-light:   #1F3238;
-  --cth-lemon-light: #332C1D;
-  --cth-lilac-light: #2B2740;
-  --cth-peach-light: #352822;
+  /* Status — calibrated for dark cypherpunk surfaces */
+  --cth-status-idle:       #8D859E;
+  --cth-status-thinking:   #38BDF8;
+  --cth-status-working:    #F59E0B;
+  --cth-status-waiting:    #8B5CF6;
+  --cth-status-blocked:    #F43F5E;
+  --cth-status-success:    #10B981;
+  --cth-status-ghost:      #645B78;
+  --cth-status-compacting: #A78BFA;
+  --cth-status-looping:    #FB923C;
+  --cth-status-typing:     #FBBF24;
 
-  /* Status — dark-tuned counterparts (same hue language) */
-  --cth-status-idle:     #6F6C77;
-  --cth-status-thinking: #64ACBB;
-  --cth-status-working:  #D8B052;
-  --cth-status-waiting:  #8095DC;
-  --cth-status-blocked:  #DF8078;
-  --cth-status-success:  #6FB88B;
-  /* The quietest status, but still a MARK the user must be able to find — at
-     the old #3D3C44 it measured 1.54:1 on the new ground and simply vanished. */
-  --cth-status-ghost:    #6C6A76;
-  --cth-status-compacting: #9D8BD2;
-  --cth-status-looping:    #D69A55;
-  --cth-status-typing:     #CBA24A;
-
-  /* Hard shadow reads as depth, not void */
-  --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.45);
+  /* Hard shadow */
+  --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.65);
 }

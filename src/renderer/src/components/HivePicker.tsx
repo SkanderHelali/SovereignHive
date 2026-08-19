@@ -66,9 +66,9 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: 'var(--cth-cream-200)',
+      background: 'var(--cth-cream-50)',
       backgroundImage:
-        `repeating-linear-gradient(45deg, rgba(232, 217, 160, 0.4) 0 1px, transparent 1px 8px)`,
+        `radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 70%), repeating-linear-gradient(45deg, rgba(139, 92, 246, 0.04) 0 1px, transparent 1px 10px)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 200,
       padding: 32
