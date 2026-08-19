@@ -1,26 +1,24 @@
-appId: in.munderdiffl.app
-productName: Munder Difflin
-copyright: Copyright © 2026 Chaitanya Giri
+appId: win.slothy.sovereignhive
+productName: Sovereign Hive
+copyright: Copyright © 2026 SovereignHive Contributors
 
-# Where electron-updater looks for new versions (latest*.yml + assets on GitHub
-# releases). The release workflow still uploads assets itself (--publish never);
-# this block only stamps app-update.yml into the packaged app so the updater
-# knows which repo to poll.
+# Where electron-updater looks for new versions
 publish:
   provider: github
-  owner: chaitanyagiri
-  repo: munder-difflin
+  owner: SkanderHelali
+  repo: SovereignHive
 
 # Notarize + staple after signing, but only when APPLE_* creds are in the env
 # (the hook no-ops otherwise, so contributor builds still work). Root-level hook.
 afterSign: build/notarize.cjs
 
-# Register the munderdifflin:// URL scheme (shareable-hires deep link) in the
+# Register deep link schemes (shareable-hires / nostr-agent deep link) in the
 # packaged app: CFBundleURLTypes on macOS, registry entries via NSIS on Windows.
 protocols:
-  - name: Munder Difflin
+  - name: Sovereign Hive
     schemes:
-      - munderdifflin
+      - sovereignhive
+      - nostragent
 
 # electron-vite emits the app into out/; package exactly that plus what the
 # runtime needs. node-pty is native, so keep it out of the asar.
@@ -72,48 +70,26 @@ mac:
   # the privacy prompt and, for a signed app, remembers the grant — so the user
   # is asked ONCE instead of on every agent action.
   extendInfo:
-    NSDocumentsFolderUsageDescription: "Munder Difflin runs your Claude Code agents, which read and write files in the project folders you point them at."
-    NSDesktopFolderUsageDescription: "Munder Difflin's agents may work on projects located on your Desktop."
-    NSDownloadsFolderUsageDescription: "Munder Difflin's agents may work on projects located in your Downloads."
-    NSRemovableVolumesUsageDescription: "Munder Difflin's agents may work on projects located on external volumes."
-    NSNetworkVolumesUsageDescription: "Munder Difflin's agents may work on projects located on network volumes."
-    # The microphone is used by two opt-in, off-by-default voice features: Free
-    # Flow dictation (Groq transcription) and Realtime Michael (live voice chat
-    # with the orchestrator via OpenAI). Mic access only happens while one is on.
-    NSMicrophoneUsageDescription: "Munder Difflin uses your microphone only for its opt-in voice features: Free Flow dictation (transcribed by Groq into the message queue) and talking to Michael in real time (streamed to OpenAI). The mic is off unless you turn one of these on."
-  # Hardened runtime + entitlements so the spawned `claude` agents inherit this
-  # app's TCC responsibility (one grant covers them all) and node-pty can load.
+    NSDocumentsFolderUsageDescription: "Sovereign Hive runs your coding agents, which read and write files in the project folders you point them at."
+    NSDesktopFolderUsageDescription: "Sovereign Hive's agents may work on projects located on your Desktop."
+    NSDownloadsFolderUsageDescription: "Sovereign Hive's agents may work on projects located in your Downloads."
+    NSRemovableVolumesUsageDescription: "Sovereign Hive's agents may work on projects located on external volumes."
+    NSNetworkVolumesUsageDescription: "Sovereign Hive's agents may work on projects located on network volumes."
+    NSMicrophoneUsageDescription: "Sovereign Hive uses your microphone only for its opt-in voice features: Free Flow dictation and talking to the orchestrator in real time. The mic is off unless you turn one of these on."
   hardenedRuntime: true
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   gatekeeperAssess: false
-  # Disable electron-builder's BUILT-IN notarization. It auto-triggers whenever the
-  # APPLE_* env vars are present and runs inside signApp — a path our afterSign hook's
-  # try/catch can't guard, so a bad-credential failure there hard-fails the whole
-  # release (exactly what bit us). Instead, the root-level `afterSign: build/notarize.cjs`
-  # hook does notarization best-effort: it tries, and on failure ships the signed (un-
-  # notarized) build rather than sinking the cross-platform release. Notarization
-  # resumes automatically once the APPLE_* secrets are valid — no further changes.
   notarize: false
-  # Signing: TCC binds a remembered grant to a STABLE code signature, so a signed
-  # build is asked for folder access ONCE. The "Developer ID Application" cert is
-  # auto-discovered from the login keychain (CSC_IDENTITY_AUTO_DISCOVERY). If no
-  # cert is found, electron-builder warns and produces an unsigned build, so
-  # contributors without an Apple account can still build.
-  #   To sign: install your "Developer ID Application" cert into the keychain.
-  #   (Override with CSC_LINK=<path-to.p12> + CSC_KEY_PASSWORD for CI.)
-  # Notarization happens in the root-level `afterSign` hook (top of this file).
-  # dmg is what humans download; zip is what Squirrel.Mac (electron-updater)
-  # actually updates from — latest-mac.yml points at it. Both universal.
   target:
     - target: dmg
       arch: [universal]
     - target: zip
       arch: [universal]
-  artifactName: Munder-Difflin-${version}-mac-${arch}.${ext}
+  artifactName: Sovereign-Hive-${version}-mac-${arch}.${ext}
 
 dmg:
-  title: Munder Difflin ${version}
+  title: Sovereign Hive ${version}
 
 # ---- Windows ----
 win:
@@ -128,11 +104,11 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  artifactName: Munder-Difflin-${version}-win-x64-setup.exe
-  shortcutName: Munder Difflin
+  artifactName: Sovereign-Hive-${version}-win-x64-setup.exe
+  shortcutName: Sovereign Hive
 
 portable:
-  artifactName: Munder-Difflin-${version}-win-x64-portable.exe
+  artifactName: Sovereign-Hive-${version}-win-x64-portable.exe
 
 # ---- Linux ----
 linux:
@@ -141,4 +117,4 @@ linux:
   target:
     - target: AppImage
       arch: [x64]
-  artifactName: Munder-Difflin-${version}-linux-x86_64.AppImage
+  artifactName: Sovereign-Hive-${version}-linux-x86_64.AppImage

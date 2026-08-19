@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2026 Chaitanya Giri
+Copyright (c) 2026 SovereignHive Contributors (https://github.com/SkanderHelali/SovereignHive)
+Copyright (c) 2026 Chaitanya Giri (https://github.com/chaitanyagiri/munder-difflin)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +23,17 @@ SOFTWARE.
 
 ---
 
-NOTE ON BUNDLED ART ASSETS
+### Fork & Upstream Attribution
+SovereignHive is an independent fork of **Munder Difflin** by Chaitanya Giri:
+- Upstream Repository: https://github.com/chaitanyagiri/munder-difflin
+- Original Project License: MIT License (Copyright (c) 2026 Chaitanya Giri)
 
-This MIT License applies to the SOURCE CODE of this project. It does NOT apply
-to the bundled pixel-art assets under src/renderer/src/assets/ (tilesets, maps,
-and character sheets), which originate from LimeZu and are distributed under the
-LimeZu FREE VERSION license — non-commercial use only. The recolored sprites
-derived from those sheets inherit the same restriction. See
-src/renderer/src/assets/ATTRIBUTION.md for details. To use this project
-commercially, replace those assets or obtain a paid LimeZu license.
+---
+
+### Note on Bundled Art Assets (Non-Commercial)
+This MIT License applies strictly to the **SOURCE CODE** of this project. It does NOT apply
+to the bundled pixel-art assets under `src/renderer/src/assets/` (tilesets, maps, and character sheets),
+which originate from LimeZu and are distributed under the **LimeZu FREE VERSION license — non-commercial use only**.
+The recolored sprites derived from those sheets inherit the same non-commercial restriction.
+See `src/renderer/src/assets/ATTRIBUTION.md` for details.
+To use this project commercially, replace those assets or obtain a commercial license from the asset creator.
